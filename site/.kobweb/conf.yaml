@@ -1,0 +1,14 @@
+site:
+  title: "Tgv Stock"
+
+server:
+  files:
+    dev:
+      contentRoot: "build/processedResources/js/main/public"
+      script: "build/kotlin-webpack/js/developmentExecutable/tgvstock.js"
+      api: "build/libs/tgvstock.jar"
+    prod:
+      script: "build/kotlin-webpack/js/productionExecutable/tgvstock.js"
+      siteRoot: ".kobweb/site"
+
+  port: 8080
