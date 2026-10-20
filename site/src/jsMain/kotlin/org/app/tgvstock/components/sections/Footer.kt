@@ -13,8 +13,10 @@ import com.varabyte.kobweb.silk.style.CssStyle
 import com.varabyte.kobweb.silk.style.base
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
+import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.cssRem
 import org.jetbrains.compose.web.css.percent
+import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.Span
 import org.app.tgvstock.toSitePalette
 
@@ -23,7 +25,7 @@ val FooterStyle = CssStyle.base {
     Modifier
         .backgroundColor(palette.nearBackground)
         .padding(topBottom = 1.25.cssRem, leftRight = 5.percent)
-        .borderTop(org.jetbrains.compose.web.css.px(1), org.jetbrains.compose.web.css.LineStyle.Solid, palette.cardBorder)
+        .borderTop(1.px, LineStyle.Solid, palette.cardBorder)
 }
 
 @Composable

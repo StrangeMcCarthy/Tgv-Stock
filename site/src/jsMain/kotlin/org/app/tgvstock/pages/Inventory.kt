@@ -18,8 +18,8 @@ import com.varabyte.kobweb.core.init.InitRoute
 import com.varabyte.kobweb.core.init.InitRouteContext
 import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.core.rememberPageContext
+import com.varabyte.kobweb.compose.ui.styleModifier
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Input
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
@@ -29,15 +29,17 @@ import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 import kotlin.math.abs
 
 @InitRoute
 fun initInventoryPage(ctx: InitRouteContext) {
-    ctx.data.add(PageLayoutData("Fiche d'Inventaire"))
+    ctx.data.add(PageLayoutData("Inventory Sheet"))
 }
 
 @Page
@@ -46,13 +48,14 @@ fun initInventoryPage(ctx: InitRouteContext) {
 fun InventoryPage() {
     val router = rememberPageContext().router
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
-    var selectedPeriod by remember { mutableStateOf("Journalier") }
+    var selectedPeriod by remember { mutableStateOf("Daily") }
     var selectedDate by remember { mutableStateOf(StockRepository.todayString()) }
     var sellerName by remember { mutableStateOf("Vendeur ZAMBOY") }
     var versementInput by remember { mutableStateOf("") }
 
-    val dateFilter = if (selectedPeriod == "Journalier") selectedDate else null
+    val dateFilter = if (selectedPeriod == "Daily") selectedDate else null
     val rows = StockRepository.getInventoryRows(dateFilter)
     val recon = StockRepository.getFinancialReconciliation(dateFilter)
 
@@ -68,18 +71,18 @@ fun InventoryPage() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.gap(0.3.cssRem)) {
-                Span(HeadlineTextStyle.toAttrs()) {
-                    Text("Fiche d'Inventaire & Bilan du Dépôt")
+                Span(HeadlineTextStyle.toModifier().toAttrs()) {
+                    Text(strings.inventoryPageTitle)
                 }
                 Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Calcul automatisé des stocks, sorties, ventes et réconciliation financière selon la fiche physique du dépôt.")
+                    Text(strings.inventoryPageSubtitle)
                 }
             }
 
             Spacer()
 
             AppButton(
-                text = "Exporter en PDF",
+                text = strings.btnExportPdf,
                 onClick = { router.tryRoutingTo("/reports") },
                 icon = { FaFilePdf() },
                 backgroundColor = Color.rgb(0xDC2626),
@@ -95,10 +98,15 @@ fun InventoryPage() {
             ) {
                 // Period tabs
                 Row(Modifier.gap(0.4.cssRem)) {
-                    listOf("Journalier", "Hebdomadaire", "Mensuel", "Annuel").forEach { p ->
-                        val isSelected = selectedPeriod == p
+                    listOf(
+                        strings.periodDaily to "Daily",
+                        strings.periodWeekly to "Weekly",
+                        strings.periodMonthly to "Monthly",
+                        strings.periodYearly to "Yearly"
+                    ).forEach { (label, key) ->
+                        val isSelected = selectedPeriod == key
                         Button(
-                            onClick = { selectedPeriod = p },
+                            onClick = { selectedPeriod = key },
                             Modifier
                                 .fontSize(0.85.cssRem)
                                 .padding(leftRight = 0.8.cssRem, topBottom = 0.4.cssRem)
@@ -107,19 +115,18 @@ fun InventoryPage() {
                                 .color(if (isSelected) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                 .border(1.px, LineStyle.Solid, if (isSelected) palette.brand.primary else palette.cardBorder)
                         ) {
-                            Text(p)
+                            Text(label)
                         }
                     }
                 }
 
-                if (selectedPeriod == "Journalier") {
+                if (selectedPeriod == "Daily") {
                     Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                            Text("Date :")
+                            Text(strings.labelDate)
                         }
-                        Input(
+                        org.jetbrains.compose.web.dom.Input(
                             type = InputType.Date,
-                            value = selectedDate,
                             attrs = Modifier
                                 .padding(0.4.cssRem)
                                 .borderRadius(6.px)
@@ -127,6 +134,7 @@ fun InventoryPage() {
                                 .backgroundColor(palette.inputBackground)
                                 .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                 .toAttrs {
+                                    value(selectedDate)
                                     onInput { selectedDate = it.value }
                                 }
                         )
@@ -135,11 +143,10 @@ fun InventoryPage() {
 
                 Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                     Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                        Text("Vendeur :")
+                        Text(strings.labelSeller)
                     }
-                    Input(
+                    org.jetbrains.compose.web.dom.Input(
                         type = InputType.Text,
-                        value = sellerName,
                         attrs = Modifier
                             .width(12.cssRem)
                             .padding(0.4.cssRem)
@@ -148,6 +155,7 @@ fun InventoryPage() {
                             .backgroundColor(palette.inputBackground)
                             .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
                             .toAttrs {
+                                value(sellerName)
                                 onInput { sellerName = it.value }
                             }
                     )
@@ -157,11 +165,10 @@ fun InventoryPage() {
 
                 Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                     Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.brand.primary).toAttrs()) {
-                        Text("Versement Caisse (FCFA) :")
+                        Text(strings.labelCashDeposit)
                     }
-                    Input(
+                    org.jetbrains.compose.web.dom.Input(
                         type = InputType.Number,
-                        value = versementInput,
                         attrs = Modifier
                             .width(10.cssRem)
                             .padding(0.4.cssRem)
@@ -171,7 +178,8 @@ fun InventoryPage() {
                             .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
                             .toAttrs {
                                 placeholder("${finalVersement.toLong()}")
-                                onInput { versementInput = it.value }
+                                value(versementInput)
+                                onInput { versementInput = it.value?.toString() ?: "" }
                             }
                     )
                 }
@@ -203,10 +211,10 @@ fun InventoryPage() {
                     }
                     Column {
                         Span(Modifier.fontSize(1.15.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                            Text("RÉCONCILIATION FINANCIÈRE DE CAISSE (FICHE D'INVENTAIRE)")
+                            Text(strings.reconTitle)
                         }
                         Span(Modifier.fontSize(0.8.cssRem).color(palette.textMuted).toAttrs()) {
-                            Text("Vérification de l'équilibre : Total Ventes vs (Versements + Dépenses + Dettes Franky)")
+                            Text(strings.reconSubtitle)
                         }
                     }
                 }
@@ -215,15 +223,15 @@ fun InventoryPage() {
                     Modifier
                         .fillMaxWidth()
                         .display(DisplayStyle.Grid)
-                        .gridTemplateColumns("repeat(auto-fit, minmax(200px, 1fr))")
+                        .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(200px, 1fr))") }
                         .gap(1.cssRem)
                         .toAttrs()
                 ) {
-                    ReconBox(title = "TOTAL VENTES", amount = recon.totalVentes, color = palette.brand.primary)
-                    ReconBox(title = "TOTAL VERSEMENT", amount = finalVersement, color = palette.success)
-                    ReconBox(title = "PERTES AVARIS", amount = recon.totalAvarisValeur, color = palette.danger)
-                    ReconBox(title = "DÉPENSES DU DÉPÔT", amount = recon.totalDepenses, color = Color.rgb(0x9333EA))
-                    ReconBox(title = "DETTES CLIENTS", amount = recon.totalDettes, color = Color.rgb(0xEA580C))
+                    ReconBox(title = strings.reconTotalSales, amount = recon.totalVentes, color = palette.brand.primary)
+                    ReconBox(title = strings.reconTotalDeposit, amount = finalVersement, color = palette.success)
+                    ReconBox(title = strings.reconSpoiledLoss, amount = recon.totalAvarisValeur, color = palette.danger)
+                    ReconBox(title = strings.reconExpenses, amount = recon.totalDepenses, color = Color.rgb(0x9333EA))
+                    ReconBox(title = strings.reconClientDebts, amount = recon.totalDettes, color = Color.rgb(0xEA580C))
                 }
 
                 // Balance difference alert
@@ -239,9 +247,9 @@ fun InventoryPage() {
                     else -> Color.rgb(0xFEE2E2)
                 }
                 val diffText = when {
-                    isBalanced -> "Caisse Parfaitement Équilibrée (Écart: 0 FCFA)"
-                    finalDiff > 0 -> "Excédent de Caisse : +${formatFcfa(finalDiff)} (Versements + Charges > Ventes)"
-                    else -> "Déficit / Manquant de Caisse : ${formatFcfa(finalDiff)} (Manque à justifier)"
+                    isBalanced -> strings.balancedMsg
+                    finalDiff > 0 -> strings.surplusMsg.replace("{amount}", formatFcfa(finalDiff))
+                    else -> strings.deficitMsg.replace("{amount}", formatFcfa(finalDiff))
                 }
 
                 Box(
@@ -254,7 +262,7 @@ fun InventoryPage() {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.1.cssRem).color(diffColor).toAttrs()) {
-                            Text("DIFFÉRENCE / ÉCART : ")
+                            Text(strings.diffLabel)
                         }
                         Span(Modifier.fontWeight(FontWeight.Bold).fontSize(1.05.cssRem).color(diffColor).margin(left = 0.5.cssRem).toAttrs()) {
                             Text(diffText)
@@ -277,15 +285,15 @@ fun InventoryPage() {
                 ) {
                     Column {
                         Span(Modifier.fontSize(1.1.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                            Text("Détail des Stocks & Sorties de Boissons")
+                            Text(strings.stockDetailTitle)
                         }
                         Span(Modifier.fontSize(0.8.cssRem).color(palette.textMuted).toAttrs()) {
-                            Text("Produits, stocks initiaux, entrées brasserie, consommation bar, ventes et reste théorique/physique.")
+                            Text(strings.stockDetailSubtitle)
                         }
                     }
                     Spacer()
                     Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.SemiBold).color(palette.brand.primary).toAttrs()) {
-                        Text("${rows.size} lignes d'inventaire")
+                        Text("${rows.size} ${strings.inventoryLines}")
                     }
                 }
 
@@ -309,31 +317,41 @@ fun InventoryPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("PRODUITS") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("STOCK INITIAL") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ENTRÉES") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("TOTAL STOCK") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("BAR") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("VENTES QT") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("TOTAL SORTIES") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("AVARIS (BTLS)") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("RESTE EN STOCK") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("RESTE PHYSIQUE") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ÉCART") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("P.U (FCFA)") }
-                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("P. TOTAL VENTES") }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProducts) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colInitStock) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colEntries) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colTotalStock) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colTotalOutflows) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).backgroundColor(Color.rgba(139, 92, 246, 0.12f)).toAttrs()) { Text(strings.colBarOutflows) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colSalesQty) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colSpoiledBottles) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colRemainingTheoretical) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colRemainingPhysical) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colDifference) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colUnitPrice) }
+                                Th(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colTotalSalesPrice) }
                             }
                         }
                         Tbody {
                             rows.forEach { r ->
+                                fun Double.fmt() = if (this == this.toLong().toDouble()) this.toLong().toString() else this.toString()
                                 Tr(Modifier.borderBottom(1.px, LineStyle.Solid, palette.cardBorder).toAttrs()) {
                                     Td(Modifier.padding(0.6.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.product.name) }
-                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("${r.stockInitial}") }
-                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) { Text("+${r.entrees}") }
-                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text("${r.totalStock}") }
-                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("${r.sortiesBar}") }
-                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.SemiBold).toAttrs()) { Text("${r.ventesQty}") }
-                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.danger).fontWeight(FontWeight.Bold).toAttrs()) { Text("${r.totalSorties}") }
+                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(r.stockInitial.fmt()) }
+                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
+                                        Text("+${r.entrees.fmt()}")
+                                        if (r.entreesBonusBottles > 0) {
+                                            Span(Modifier.fontSize(0.7.cssRem).color(palette.success).fontWeight(FontWeight.Bold).display(DisplayStyle.Block).toAttrs()) {
+                                                Text("(+${r.entreesBonusBottles} btl bonus)")
+                                            }
+                                        }
+                                    }
+                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.totalStock.fmt()) }
+                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.danger).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.totalSorties.fmt()) }
+                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).backgroundColor(Color.rgba(139, 92, 246, 0.08f)).fontWeight(FontWeight.SemiBold).color(Color.rgb(0x7C3AED)).toAttrs()) {
+                                        Text(r.sortiesBar.fmt())
+                                    }
+                                    Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).color(palette.success).toAttrs()) { Text(r.ventesQty.fmt()) }
                                     Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
                                         if (r.avariesBottles > 0) {
                                             Span(Modifier.color(palette.danger).fontWeight(FontWeight.Bold).toAttrs()) {
@@ -347,9 +365,8 @@ fun InventoryPage() {
                                         Text("${r.resteTheorique}")
                                     }
                                     Td(Modifier.padding(0.6.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
-                                        Input(
+                                        org.jetbrains.compose.web.dom.Input(
                                             type = InputType.Number,
-                                            value = r.restePhysique.toString(),
                                             attrs = Modifier
                                                 .width(4.cssRem)
                                                 .textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center)
@@ -357,8 +374,9 @@ fun InventoryPage() {
                                                 .borderRadius(4.px)
                                                 .border(1.px, LineStyle.Solid, palette.cardBorder)
                                                 .toAttrs {
+                                                    value(r.restePhysique.toString())
                                                     onInput { ev ->
-                                                        val v = ev.value.toDoubleOrNull() ?: r.resteTheorique
+                                                        val v = ev.value?.toDouble() ?: r.resteTheorique
                                                         StockRepository.updatePhysicalCount(r.product.id, v)
                                                     }
                                                 }

@@ -19,22 +19,27 @@ import com.varabyte.kobweb.core.init.InitRoute
 import com.varabyte.kobweb.core.init.InitRouteContext
 import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.core.rememberPageContext
+import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
+import kotlin.math.roundToInt
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
+import org.app.tgvstock.models.*
 import org.app.tgvstock.ActionCardStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
 fun initHomePage(ctx: InitRouteContext) {
-    ctx.data.add(PageLayoutData("Tableau de Bord"))
+    ctx.data.add(PageLayoutData("Dashboard"))
 }
 
 @Page
@@ -43,9 +48,11 @@ fun initHomePage(ctx: InitRouteContext) {
 fun HomePage() {
     val router = rememberPageContext().router
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
     // Modals state for quick action on dashboard
     var showSaleModal by remember { mutableStateOf(false) }
+    var saleModalDestination by remember { mutableStateOf("Dépôt") }
     var showEntryModal by remember { mutableStateOf(false) }
     var showSpoiledModal by remember { mutableStateOf(false) }
     var showDebtModal by remember { mutableStateOf(false) }
@@ -76,7 +83,7 @@ fun HomePage() {
             Column(Modifier.gap(0.3.cssRem)) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.5.cssRem)) {
                     Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                        Text("Dépôt TGV Stock")
+                        Text(strings.dashTitle)
                     }
                     Box(
                         Modifier
@@ -87,11 +94,11 @@ fun HomePage() {
                             .fontSize(0.75.cssRem)
                             .fontWeight(FontWeight.Bold)
                     ) {
-                        Text("● Opérationnel")
+                        Text(strings.operational)
                     }
                 }
                 Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Date: ${StockRepository.todayString()} — Suivi en temps réel des ventes, entrées, avaries, dettes et bilans financiers.")
+                    Text("Date: ${StockRepository.todayString()} — ${strings.dashSubtitle}")
                 }
             }
 
@@ -99,13 +106,13 @@ fun HomePage() {
 
             Row(Modifier.gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 AppButton(
-                    text = "Fiche d'Inventaire",
+                    text = strings.btnInventorySheet,
                     onClick = { router.tryRoutingTo("/inventory") },
                     icon = { FaClipboardList() },
                     backgroundColor = palette.brand.primary
                 )
                 AppButton(
-                    text = "Rapports PDF",
+                    text = strings.btnPdfReports,
                     onClick = { router.tryRoutingTo("/reports") },
                     icon = { FaFilePdf() },
                     backgroundColor = Color.rgb(0xDC2626),
@@ -124,41 +131,41 @@ fun HomePage() {
                 .toAttrs()
         ) {
             StatCard(
-                title = "Valeur du Stock",
+                title = strings.statStockValue,
                 value = formatFcfa(totalValue),
-                subtitle = "$totalCrates casiers en stock théorique",
+                subtitle = "$totalCrates ${strings.statStockValueSub}",
                 icon = { FaWarehouse() },
                 accentColor = palette.brand.primary
             )
 
             StatCard(
-                title = "Ventes Aujourd'hui",
+                title = strings.statTodaySales,
                 value = formatFcfa(todaySales),
-                subtitle = "${StockRepository.sales.filter { it.date == StockRepository.todayString() }.size} transactions enregistrées",
+                subtitle = "${StockRepository.sales.filter { it.date == StockRepository.todayString() }.size} ${strings.statTodaySalesSub}",
                 icon = { FaCashRegister() },
                 accentColor = palette.success
             )
 
             StatCard(
-                title = "Dettes Clients Actives",
+                title = strings.statActiveDebts,
                 value = formatFcfa(activeDebts),
-                subtitle = "${StockRepository.debts.filter { it.status != "Réglé" }.size} créances en attente",
+                subtitle = "${StockRepository.debts.filter { it.status != "Réglé" }.size} ${strings.statActiveDebtsSub}",
                 icon = { FaHandHoldingDollar() },
                 accentColor = palette.danger
             )
 
             StatCard(
-                title = "Dépenses du Jour",
+                title = strings.statTodayExpenses,
                 value = formatFcfa(todayExpenses),
-                subtitle = "${StockRepository.expenses.filter { it.date == StockRepository.todayString() }.size} motifs de charges",
+                subtitle = "${StockRepository.expenses.filter { it.date == StockRepository.todayString() }.size} ${strings.statTodayExpensesSub}",
                 icon = { FaReceipt() },
                 accentColor = Color.rgb(0x8B5CF6)
             )
 
             StatCard(
-                title = "Emballages (Casiers)",
+                title = strings.statPackaging,
                 value = "$emptyPackagingCount Vides / $fullPackagingCount Pleins",
-                subtitle = "Total: ${emptyPackagingCount + fullPackagingCount} casiers suivis",
+                subtitle = "Total: ${emptyPackagingCount + fullPackagingCount} ${strings.statPackagingSub}",
                 icon = { FaBoxesStacked() },
                 accentColor = Color.rgb(0x06B6D4)
             )
@@ -169,11 +176,11 @@ fun HomePage() {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Span(Modifier.fontSize(1.1.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                        Text("Actions Rapides du Dépôt")
+                        Text(strings.quickActionsTitle)
                     }
                     Spacer()
                     Span(Modifier.fontSize(0.8.cssRem).color(palette.textMuted).toAttrs()) {
-                        Text("Accès direct aux modules d'enregistrement")
+                        Text(strings.quickActionsSubtitle)
                     }
                 }
 
@@ -186,64 +193,78 @@ fun HomePage() {
                         .toAttrs()
                 ) {
                     QuickActionTile(
-                        title = "Nouvelle Vente",
-                        desc = "Enregistrer une sortie",
+                        title = strings.qaNewSale,
+                        desc = strings.qaNewSaleDesc,
                         icon = { FaCartPlus() },
                         color = palette.success,
-                        onClick = { showSaleModal = true }
+                        onClick = {
+                            saleModalDestination = "Dépôt"
+                            showSaleModal = true
+                        }
                     )
 
                     QuickActionTile(
-                        title = "Nouvel Arrivage",
-                        desc = "Entrée livraison camion",
-                        icon = { FaTruckLoading() },
+                        title = "Transfert Bar",
+                        desc = "Sortie magasin vers le bar (hors vente)",
+                        icon = { FaWineGlass() },
+                        color = Color.rgb(0x8B5CF6),
+                        onClick = {
+                            saleModalDestination = "Bar"
+                            showSaleModal = true
+                        }
+                    )
+
+                    QuickActionTile(
+                        title = strings.qaNewEntry,
+                        desc = strings.qaNewEntryDesc,
+                        icon = { FaTruck() },
                         color = palette.brand.primary,
                         onClick = { showEntryModal = true }
                     )
 
                     QuickActionTile(
-                        title = "Déclarer Avarie",
-                        desc = "Casse & bouteilles gâtées",
+                        title = strings.qaSpoiled,
+                        desc = strings.qaSpoiledDesc,
                         icon = { FaWineGlass() },
                         color = palette.danger,
                         onClick = { showSpoiledModal = true }
                     )
 
                     QuickActionTile(
-                        title = "Nouvelle Dette",
-                        desc = "Casiers dus par client",
+                        title = strings.qaNewDebt,
+                        desc = strings.qaNewDebtDesc,
                         icon = { FaHandHoldingDollar() },
                         color = Color.rgb(0xEA580C),
                         onClick = { showDebtModal = true }
                     )
 
                     QuickActionTile(
-                        title = "Nouvelle Dépense",
-                        desc = "Charges, manutention, etc.",
+                        title = strings.qaNewExpense,
+                        desc = strings.qaNewExpenseDesc,
                         icon = { FaReceipt() },
                         color = Color.rgb(0x9333EA),
                         onClick = { showExpenseModal = true }
                     )
 
                     QuickActionTile(
-                        title = "Fiche d'Inventaire",
-                        desc = "Bilan et écart de caisse",
+                        title = strings.qaInventorySheet,
+                        desc = strings.qaInventorySheetDesc,
                         icon = { FaClipboardCheck() },
                         color = Color.rgb(0x2563EB),
                         onClick = { router.tryRoutingTo("/inventory") }
                     )
 
                     QuickActionTile(
-                        title = "État des Stocks",
-                        desc = "Audit physique / Théorique",
+                        title = strings.qaStockAudit,
+                        desc = strings.qaStockAuditDesc,
                         icon = { FaBoxesStacked() },
                         color = Color.rgb(0x0D9488),
                         onClick = { showStockAuditModal = true }
                     )
 
                     QuickActionTile(
-                        title = "Exporter PDF",
-                        desc = "Journalier / Mensuel / Annuel",
+                        title = strings.qaExportPdf,
+                        desc = strings.qaExportPdfDesc,
                         icon = { FaFilePdf() },
                         color = Color.rgb(0xDC2626),
                         onClick = { router.tryRoutingTo("/reports") }
@@ -279,17 +300,17 @@ fun HomePage() {
                     }
                     Column {
                         Span(Modifier.fontWeight(FontWeight.Bold).color(Color.rgb(0x991B1B)).fontSize(0.95.cssRem).toAttrs()) {
-                            Text("Alerte Stock Bas (${lowStockList.size} produits sous le seuil de 10 casiers)")
+                            Text("${strings.lowStockAlert} (${lowStockList.size} ${strings.lowStockAlertSub})")
                         }
                         Span(Modifier.color(Color.rgb(0x7F1D1D)).fontSize(0.85.cssRem).toAttrs()) {
-                            Text(lowStockList.take(6).joinToString(", ") { "${it.product.name} (${it.resteTheorique.toInt()} casiers)" } + if (lowStockList.size > 6) "..." else "")
+                            Text(lowStockList.take(6).joinToString(", ") { "${it.product.name} (${it.resteTheorique.toInt()} ${strings.crates})" } + if (lowStockList.size > 6) "..." else "")
                         }
                     }
                     Spacer()
                     AppButton(
-                        text = "Réapprovisionner",
+                        text = strings.btnRestock,
                         onClick = { showEntryModal = true },
-                        icon = { FaTruckLoading() },
+                        icon = { FaTruck() },
                         backgroundColor = Color.rgb(0xEF4444),
                         textColor = Colors.White
                     )
@@ -306,10 +327,10 @@ fun HomePage() {
                 ) {
                     Column {
                         Span(Modifier.fontSize(1.2.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                            Text("État Instantané des Stocks")
+                            Text(strings.tableStockTitle)
                         }
                         Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                            Text("Calcul automatique en direct : Initial + Entrées - Ventes - Avaries = Reste")
+                            Text(strings.tableStockSubtitle)
                         }
                     }
 
@@ -318,7 +339,7 @@ fun HomePage() {
                     AppTextInput(
                         value = stockSearchQuery,
                         onValueChange = { stockSearchQuery = it },
-                        placeholderText = "Rechercher un produit...",
+                        placeholderText = strings.searchProduct,
                         type = "search",
                         modifier = Modifier.width(18.cssRem)
                     )
@@ -345,15 +366,15 @@ fun HomePage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("PRODUIT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("CATÉGORIE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("STOCK INITIAL") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ENTRÉES") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("SORTIES") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("RESTE EN STOCK") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("P.U (FCFA)") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("VALEUR EN STOCK") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTIONS") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProduct) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colCategory) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colInitialStock) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colEntries) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colOutflows) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colRemainingStock) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colUnitPrice) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colStockValue) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colActions) }
                             }
                         }
                         Tbody {
@@ -364,7 +385,7 @@ fun HomePage() {
                             if (filteredRows.isEmpty()) {
                                 Tr {
                                     Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "9") }) {
-                                        Text("Aucun produit ne correspond à votre recherche.")
+                                        Text(strings.noSearchResult)
                                     }
                                 }
                             } else {
@@ -381,13 +402,13 @@ fun HomePage() {
                                                 Text(row.product.name)
                                                 if (isLow) {
                                                     Span(Modifier.fontSize(0.7.cssRem).color(palette.danger).fontWeight(FontWeight.Bold).toAttrs()) {
-                                                        Text("(Bas)")
+                                                        Text(strings.lowBadge)
                                                     }
                                                 }
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) { Text(row.product.category) }
-                                        Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("${row.stockInitial} casiers") }
+                                        Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("${row.stockInitial} ${strings.crates}") }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) { Text("+${row.entrees}") }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.danger).fontWeight(FontWeight.SemiBold).toAttrs()) { Text("-${row.totalSorties}") }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
@@ -400,7 +421,7 @@ fun HomePage() {
                                                     .fontWeight(FontWeight.Bold)
                                                     .display(DisplayStyle.InlineBlock)
                                             ) {
-                                                Text("${row.resteTheorique} casiers")
+                                                Text("${row.resteTheorique} ${strings.crates}")
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).fontWeight(FontWeight.SemiBold).toAttrs()) {
@@ -411,7 +432,7 @@ fun HomePage() {
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
                                             AppButton(
-                                                text = "Vendre",
+                                                text = strings.btnSell,
                                                 onClick = { showSaleModal = true },
                                                 modifier = Modifier.fontSize(0.75.cssRem).padding(leftRight = 0.6.cssRem, topBottom = 0.25.cssRem)
                                             )
@@ -426,7 +447,11 @@ fun HomePage() {
         }
     }
 
-    QuickSaleModal(isOpen = showSaleModal, onClose = { showSaleModal = false })
+    QuickSaleModal(
+        isOpen = showSaleModal,
+        initialDestination = saleModalDestination,
+        onClose = { showSaleModal = false }
+    )
     QuickEntryModal(isOpen = showEntryModal, onClose = { showEntryModal = false })
     QuickSpoiledModal(isOpen = showSpoiledModal, onClose = { showSpoiledModal = false })
     QuickDebtModal(isOpen = showDebtModal, onClose = { showDebtModal = false })
@@ -474,56 +499,150 @@ fun QuickActionTile(
 
 // Quick Modals for Dashboard
 @Composable
-fun QuickSaleModal(isOpen: Boolean, onClose: () -> Unit) {
+fun QuickSaleModal(
+    isOpen: Boolean,
+    initialDestination: String = "Dépôt",
+    onClose: () -> Unit
+) {
+    if (!isOpen) return
     var selectedProductId by remember { mutableStateOf(StockRepository.products.firstOrNull()?.id ?: "") }
     var quantity by remember { mutableStateOf("1") }
-    var destination by remember { mutableStateOf("Dépôt") }
-    var customerName by remember { mutableStateOf("Comptoir") }
-    var paymentMethod by remember { mutableStateOf("Espèces") }
+    var destination by remember { mutableStateOf(initialDestination) }
+    var customerName by remember { mutableStateOf(if (initialDestination == "Bar") "Bar" else "Comptoir") }
+    var paymentMethod by remember { mutableStateOf(if (initialDestination == "Bar") "Transfert Interne" else "Esp\u00e8ces") }
 
     val prod = StockRepository.products.find { it.id == selectedProductId }
-    val qtyInt = quantity.toIntOrNull() ?: 1
+    // All beers, alcopops, and Guinness support half-crates
+    val supportsHalfCrate = prod?.supportsHalfCrate() == true
+    val qtyDouble = quantity.toDoubleOrNull() ?: 1.0
     val pu = prod?.unitPrice ?: 0.0
-    val total = qtyInt * pu
+    val total = qtyDouble * pu
 
-    ModalDialog(title = "Enregistrer une Vente", isOpen = isOpen, onClose = onClose) {
+    val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
+    ModalDialog(
+        title = if (destination == "Bar") "Enregistrer un Transfert vers le Bar" else strings.modalSaleTitle,
+        isOpen = isOpen,
+        onClose = onClose
+    ) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-            FormField(label = "Produit") {
+            FormField(label = strings.fieldProduct) {
                 Select(
                     Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
                         onChange { selectedProductId = it.value ?: "" }
                     }
                 ) {
                     StockRepository.products.forEach { p ->
-                        Option(p.id, attrs = { if (p.id == selectedProductId) selected() }) {
-                            Text("${p.name} — ${formatFcfa(p.unitPrice)}")
+                        Option(p.id, attrs = { if (p.id == selectedProductId) attr("selected", "") }) {
+                            Text("${p.name} \u2014 ${formatFcfa(p.unitPrice)}${if (p.supportsHalfCrate()) " [Demi-casier ok]" else ""}")
                         }
                     }
                 }
             }
 
-            FormField(label = "Quantité (en Casiers / Cartons)") {
-                AppTextInput(
-                    value = quantity,
-                    onValueChange = { quantity = it },
-                    type = "number",
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            FormField(label = if (supportsHalfCrate) "${strings.fieldQty} (demi-casier autoris\u00e9 : 0.5, 1.5, 2.5...)" else strings.fieldQty) {
+                Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
+                    org.jetbrains.compose.web.dom.Input(
+                        type = org.jetbrains.compose.web.attributes.InputType.Number,
+                        attrs = Modifier.fillMaxWidth()
+                            .padding(leftRight = 0.75.cssRem, topBottom = 0.45.cssRem)
+                            .borderRadius(8.px)
+                            .border(1.px, LineStyle.Solid, palette.cardBorder)
+                            .backgroundColor(palette.inputBackground)
+                            .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                            .toAttrs {
+                                value(quantity)
+                                attr("step", if (supportsHalfCrate) "0.5" else "1")
+                                attr("min", "0.5")
+                                onInput { quantity = it.value?.toString() ?: "1" }
+                            }
+                    )
 
-            FormField(label = "Destination") {
-                Select(
-                    Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
-                        onChange { destination = it.value ?: "Dépôt" }
+                    if (supportsHalfCrate) {
+                        Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                            Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
+                                Text("Demi-casier :")
+                            }
+                            listOf("0.5", "1", "1.5", "2", "3", "5").forEach { preset ->
+                                Button(
+                                    onClick = { quantity = preset },
+                                    Modifier
+                                        .fontSize(0.72.cssRem)
+                                        .padding(leftRight = 0.45.cssRem, topBottom = 0.15.cssRem)
+                                        .borderRadius(12.px)
+                                        .backgroundColor(if (quantity == preset) palette.brand.primary else palette.nearBackground)
+                                        .color(if (quantity == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                        .border(1.px, LineStyle.Solid, palette.cardBorder)
+                                ) {
+                                    Text("$preset cas.")
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    val cur = quantity.toDoubleOrNull() ?: 0.0
+                                    quantity = (cur + 0.5).toString()
+                                },
+                                Modifier
+                                    .fontSize(0.72.cssRem)
+                                    .padding(leftRight = 0.45.cssRem, topBottom = 0.15.cssRem)
+                                    .borderRadius(12.px)
+                                    .backgroundColor(palette.nearBackground)
+                                    .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                    .border(1.px, LineStyle.Solid, palette.cardBorder)
+                            ) {
+                                Text("+0.5")
+                            }
+                        }
                     }
-                ) {
-                    Option("Dépôt") { Text("Vente Directe Dépôt") }
-                    Option("Bar") { Text("Transfert / Consommation Bar") }
-                    Option("Client Gros") { Text("Client Grossiste") }
                 }
             }
 
-            FormField(label = "Client / Acheteur") {
+            FormField(label = strings.fieldDestination) {
+                Select(
+                    Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
+                        onChange {
+                            val newDest = it.value ?: "D\u00e9p\u00f4t"
+                            destination = newDest
+                            if (newDest == "Bar") {
+                                if (customerName == "Comptoir" || customerName.isBlank()) customerName = "Bar"
+                                paymentMethod = "Transfert Interne"
+                            } else {
+                                if (customerName == "Bar") customerName = "Comptoir"
+                                if (paymentMethod == "Transfert Interne") paymentMethod = "Esp\u00e8ces"
+                            }
+                        }
+                    }
+                ) {
+                    Option("D\u00e9p\u00f4t", attrs = { if (destination == "D\u00e9p\u00f4t") attr("selected", "") }) { Text(strings.destDepot) }
+                    Option("Bar", attrs = { if (destination == "Bar") attr("selected", "") }) { Text("Bar (Transfert Interne)") }
+                    Option("Client Gros", attrs = { if (destination == "Client Gros") attr("selected", "") }) { Text(strings.destWholesale) }
+                }
+            }
+
+            if (destination == "Bar") {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .backgroundColor(if (ColorMode.current.isDark) Color.rgba(139, 92, 246, 0.2f) else Color.rgb(0xEDE9FE))
+                        .padding(0.75.cssRem)
+                        .borderRadius(8.px)
+                        .border(1.px, LineStyle.Solid, Color.rgb(0x8B5CF6))
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.6.cssRem)) {
+                        FaWineGlass(Modifier.color(Color.rgb(0x7C3AED)).fontSize(1.cssRem))
+                        Column(Modifier.gap(0.2.cssRem)) {
+                            Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(Color.rgb(0x5B21B6)).toAttrs()) {
+                                Text("Transfert Bar \u2014 Mouvement Interne")
+                            }
+                            Span(Modifier.fontSize(0.78.cssRem).color(Color.rgb(0x6D28D9)).toAttrs()) {
+                                Text("Cette sortie r\u00e9duit le stock magasin mais N'EST PAS incluse dans les ventes totales ni dans les recettes financi\u00e8res.")
+                            }
+                        }
+                    }
+                }
+            }
+
+            FormField(label = if (destination == "Bar") "Service / R\u00e9ceptionnaire" else strings.fieldCustomer) {
                 AppTextInput(
                     value = customerName,
                     onValueChange = { customerName = it },
@@ -532,31 +651,35 @@ fun QuickSaleModal(isOpen: Boolean, onClose: () -> Unit) {
                 )
             }
 
-            FormField(label = "Mode de Paiement") {
+            FormField(label = strings.fieldPayment) {
                 Select(
                     Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
-                        onChange { paymentMethod = it.value ?: "Espèces" }
+                        onChange { paymentMethod = it.value ?: "Esp\u00e8ces" }
                     }
                 ) {
-                    Option("Espèces") { Text("Espèces (Cash)") }
-                    Option("Mobile Money") { Text("Mobile Money (OM/MOMO)") }
-                    Option("À Crédit") { Text("À Crédit (Ajouter aux Dettes)") }
+                    if (destination == "Bar") {
+                        Option("Transfert Interne", attrs = { attr("selected", "") }) { Text("Transfert Interne (Non Encaiss\u00e9)") }
+                    } else {
+                        Option("Esp\u00e8ces", attrs = { if (paymentMethod == "Esp\u00e8ces") attr("selected", "") }) { Text(strings.paymentCash) }
+                        Option("Mobile Money", attrs = { if (paymentMethod == "Mobile Money") attr("selected", "") }) { Text(strings.paymentMobile) }
+                        Option("\u00c0 Cr\u00e9dit", attrs = { if (paymentMethod == "\u00c0 Cr\u00e9dit") attr("selected", "") }) { Text(strings.paymentCredit) }
+                    }
                 }
             }
 
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .backgroundColor(Color.rgb(0xFEF3C7))
+                    .backgroundColor(if (destination == "Bar") Color.rgb(0xF3E8FF) else Color.rgb(0xFEF3C7))
                     .padding(0.75.cssRem)
                     .borderRadius(8.px)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Span(Modifier.fontWeight(FontWeight.Bold).color(Color.rgb(0x92400E)).toAttrs()) {
-                        Text("Montant Total : ")
+                    Span(Modifier.fontWeight(FontWeight.Bold).color(if (destination == "Bar") Color.rgb(0x6B21A8) else Color.rgb(0x92400E)).toAttrs()) {
+                        Text(if (destination == "Bar") "Valeur du Transfert Stock" else strings.totalAmount)
                     }
                     Spacer()
-                    Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.2.cssRem).color(Color.rgb(0x92400E)).toAttrs()) {
+                    Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.2.cssRem).color(if (destination == "Bar") Color.rgb(0x6B21A8) else Color.rgb(0x92400E)).toAttrs()) {
                         Text(formatFcfa(total))
                     }
                 }
@@ -564,14 +687,16 @@ fun QuickSaleModal(isOpen: Boolean, onClose: () -> Unit) {
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = "Confirmer la Vente",
+                    text = if (destination == "Bar") "Valider le Transfert Bar" else strings.btnConfirmSale,
+                    backgroundColor = if (destination == "Bar") Color.rgb(0x7C3AED) else palette.success,
+                    textColor = Colors.White,
                     onClick = {
-                        if (selectedProductId.isNotBlank() && qtyInt > 0) {
+                        if (selectedProductId.isNotBlank() && qtyDouble > 0) {
                             StockRepository.recordSale(
                                 productId = selectedProductId,
-                                quantityCrates = qtyInt,
+                                quantityCrates = qtyDouble,
                                 destination = destination,
                                 customerName = customerName,
                                 paymentMethod = paymentMethod
@@ -587,37 +712,198 @@ fun QuickSaleModal(isOpen: Boolean, onClose: () -> Unit) {
 
 @Composable
 fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
+    if (!isOpen) return
     var selectedProductId by remember { mutableStateOf(StockRepository.products.firstOrNull()?.id ?: "") }
     var quantity by remember { mutableStateOf("10") }
+    var extrasPerCrate by remember { mutableStateOf("0") }
+    var customExtras by remember { mutableStateOf("") }
+    var motif by remember { mutableStateOf("") }
     var supplier by remember { mutableStateOf("Boissons du Cameroun") }
     var notes by remember { mutableStateOf("") }
 
-    ModalDialog(title = "Nouvel Arrivage / Entrée en Stock", isOpen = isOpen, onClose = onClose) {
+    val prod = StockRepository.products.find { it.id == selectedProductId }
+    // All beers, alcopops, and Guinness support half-crates (0.5)
+    val supportsHalfCrate = prod?.supportsHalfCrate() == true
+    val qtyDouble = quantity.toDoubleOrNull() ?: 0.0
+
+    val extrasInt = extrasPerCrate.toIntOrNull() ?: 0
+    val totalBonusBottles = if (extrasPerCrate == "custom") {
+        customExtras.toIntOrNull() ?: 0
+    } else {
+        (extrasInt * qtyDouble).toInt()
+    }
+    val bpc = prod?.bottlesPerCrate?.takeIf { it > 0 } ?: 12
+    val bonusCratesEquiv = if (bpc > 0) ((totalBonusBottles.toDouble() / bpc) * 100.0).roundToInt() / 100.0 else 0.0
+
+    val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
+
+    ModalDialog(title = strings.modalEntryTitle, isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-            FormField(label = "Produit Réceptionné") {
+            FormField(label = strings.fieldReceivedProduct) {
                 Select(
                     Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
                         onChange { selectedProductId = it.value ?: "" }
                     }
                 ) {
                     StockRepository.products.forEach { p ->
-                        Option(p.id, attrs = { if (p.id == selectedProductId) selected() }) {
-                            Text(p.name)
+                        Option(p.id, attrs = { if (p.id == selectedProductId) attr("selected", "") }) {
+                            Text("${p.name}${if (p.supportsHalfCrate()) " [Demi-casier ok]" else ""}")
                         }
                     }
                 }
             }
 
-            FormField(label = "Quantité Reçue (en Casiers / Cartons)") {
-                AppTextInput(
-                    value = quantity,
-                    onValueChange = { quantity = it },
-                    type = "number",
-                    modifier = Modifier.fillMaxWidth()
-                )
+            FormField(label = if (supportsHalfCrate) "${strings.fieldReceivedQty} (demi-casier autoris\u00e9 : 0.5, 1.5, 2.5...)" else strings.fieldReceivedQty) {
+                Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
+                    org.jetbrains.compose.web.dom.Input(
+                        type = org.jetbrains.compose.web.attributes.InputType.Number,
+                        attrs = Modifier.fillMaxWidth()
+                            .padding(leftRight = 0.75.cssRem, topBottom = 0.45.cssRem)
+                            .borderRadius(8.px)
+                            .border(1.px, LineStyle.Solid, palette.cardBorder)
+                            .backgroundColor(palette.inputBackground)
+                            .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                            .toAttrs {
+                                value(quantity)
+                                attr("step", if (supportsHalfCrate) "0.5" else "1")
+                                attr("min", "0.5")
+                                onInput { quantity = it.value?.toString() ?: "0" }
+                            }
+                    )
+
+                    if (supportsHalfCrate) {
+                        Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                            Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
+                                Text("Demi-casier :")
+                            }
+                            listOf("0.5", "1", "5", "10", "20", "50").forEach { preset ->
+                                Button(
+                                    onClick = { quantity = preset },
+                                    Modifier
+                                        .fontSize(0.72.cssRem)
+                                        .padding(leftRight = 0.45.cssRem, topBottom = 0.15.cssRem)
+                                        .borderRadius(12.px)
+                                        .backgroundColor(if (quantity == preset) palette.brand.primary else palette.nearBackground)
+                                        .color(if (quantity == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                        .border(1.px, LineStyle.Solid, palette.cardBorder)
+                                ) {
+                                    Text("$preset cas.")
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    val cur = quantity.toDoubleOrNull() ?: 0.0
+                                    quantity = (cur + 0.5).toString()
+                                },
+                                Modifier
+                                    .fontSize(0.72.cssRem)
+                                    .padding(leftRight = 0.45.cssRem, topBottom = 0.15.cssRem)
+                                    .borderRadius(12.px)
+                                    .backgroundColor(palette.nearBackground)
+                                    .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                    .border(1.px, LineStyle.Solid, palette.cardBorder)
+                            ) {
+                                Text("+0.5")
+                            }
+                        }
+                    }
+                }
             }
 
-            FormField(label = "Fournisseur / Brasserie") {
+            // Extras: deliveries sometimes include two or three extra bottles per crate
+            FormField(label = "Bouteilles suppl\u00e9mentaires / Extras par casier (Livraison)") {
+                Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
+                    Select(
+                        Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
+                            onChange {
+                                extrasPerCrate = it.value ?: "0"
+                                val v = it.value?.toIntOrNull() ?: 0
+                                if (v > 0) {
+                                    motif = "Surplus brasserie (+$v bout./casier offertes)"
+                                } else if (v < 0) {
+                                    motif = "Casse au d\u00e9chargement ($v bout./casier manquantes)"
+                                } else if (extrasPerCrate == "0") {
+                                    motif = ""
+                                }
+                            }
+                        }
+                    ) {
+                        Option("0", attrs = { if (extrasPerCrate == "0") attr("selected", "") }) {
+                            Text("Aucun extra (livraison standard conforme)")
+                        }
+                        Option("2", attrs = { if (extrasPerCrate == "2") attr("selected", "") }) {
+                            Text("+2 bouteilles en plus par casier (Tr\u00e8s fr\u00e9quent brasserie)")
+                        }
+                        Option("3", attrs = { if (extrasPerCrate == "3") attr("selected", "") }) {
+                            Text("+3 bouteilles en plus par casier (Tr\u00e8s fr\u00e9quent brasserie)")
+                        }
+                        Option("1", attrs = { if (extrasPerCrate == "1") attr("selected", "") }) {
+                            Text("+1 bouteille en plus par casier")
+                        }
+                        Option("-1", attrs = { if (extrasPerCrate == "-1") attr("selected", "") }) {
+                            Text("-1 bouteille manquante par casier (casse / avarie)")
+                        }
+                        Option("-2", attrs = { if (extrasPerCrate == "-2") attr("selected", "") }) {
+                            Text("-2 bouteilles manquantes par casier (casse)")
+                        }
+                        Option("-3", attrs = { if (extrasPerCrate == "-3") attr("selected", "") }) {
+                            Text("-3 bouteilles manquantes par casier (casse)")
+                        }
+                        Option("custom", attrs = { if (extrasPerCrate == "custom") attr("selected", "") }) {
+                            Text("Autre quantit\u00e9 totale de bouteilles extras / manquantes...")
+                        }
+                    }
+
+                    if (extrasPerCrate == "custom") {
+                        AppTextInput(
+                            value = customExtras,
+                            onValueChange = { customExtras = it },
+                            placeholderText = "Nombre total de bouteilles suppl\u00e9mentaires (ex: 15)",
+                            type = "number",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    if (totalBonusBottles != 0) {
+                        val isPositive = totalBonusBottles > 0
+                        val alertColor = if (isPositive) Color.rgb(0x065F46) else Color.rgb(0x991B1B)
+                        val alertBg = if (isPositive) Color.rgb(0xD1FAE5) else Color.rgb(0xFEE2E2)
+                        Box(
+                            Modifier.fillMaxWidth().backgroundColor(alertBg).borderRadius(8.px)
+                                .padding(0.6.cssRem).margin(top = 0.2.cssRem)
+                        ) {
+                            Column(Modifier.gap(0.2.cssRem)) {
+                                val sign = if (isPositive) "+" else ""
+                                Span(Modifier.fontSize(0.85.cssRem).color(alertColor).fontWeight(FontWeight.Bold).toAttrs()) {
+                                    Text(if (isPositive) "\u2713 Bonus de livraison enregistr\u00e9 :" else "\u26a0\ufe0f Manquant de livraison constat\u00e9 :")
+                                }
+                                Span(Modifier.fontSize(0.8.cssRem).color(alertColor).toAttrs()) {
+                                    if (extrasPerCrate != "custom") {
+                                        Text("$sign$extrasInt btl/casier \u00d7 $qtyDouble casiers = $sign$totalBonusBottles bouteilles au total ($sign$bonusCratesEquiv casier \u00e9quiv.)")
+                                    } else {
+                                        Text("$sign$totalBonusBottles bouteilles au total ($sign$bonusCratesEquiv casier \u00e9quiv.)")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (totalBonusBottles != 0) {
+                FormField(label = "Motif de l'\u00e9cart / bonus (obligatoire)") {
+                    AppTextInput(
+                        value = motif,
+                        onValueChange = { motif = it },
+                        placeholderText = "Ex: 2 bouteilles offertes par casier par la brasserie",
+                        type = "text",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            FormField(label = strings.fieldSupplier) {
                 AppTextInput(
                     value = supplier,
                     onValueChange = { supplier = it },
@@ -626,11 +912,11 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                 )
             }
 
-            FormField(label = "Notes / Bordereau de livraison") {
+            FormField(label = strings.fieldNotes) {
                 AppTextInput(
                     value = notes,
                     onValueChange = { notes = it },
-                    placeholderText = "Ex: Camion #3, BL 14890",
+                    placeholderText = "Ex: Camion #3, BL 14890, promotion brasserie",
                     type = "text",
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -638,15 +924,17 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = "Enregistrer l'Entrée",
+                    text = strings.btnSaveEntry,
                     onClick = {
-                        val qty = quantity.toIntOrNull() ?: 0
-                        if (selectedProductId.isNotBlank() && qty > 0) {
+                        if (selectedProductId.isNotBlank() && qtyDouble > 0) {
                             StockRepository.addEntry(
                                 productId = selectedProductId,
-                                quantityCrates = qty,
+                                quantityCrates = qtyDouble,
+                                extras = extrasInt,
+                                totalExtras = totalBonusBottles,
+                                motif = motif,
                                 supplier = supplier,
                                 notes = notes
                             )
@@ -659,34 +947,37 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
     }
 }
 
+
 @Composable
 fun QuickSpoiledModal(isOpen: Boolean, onClose: () -> Unit) {
+    if (!isOpen) return
     var selectedProductId by remember { mutableStateOf(StockRepository.products.firstOrNull()?.id ?: "") }
     var quantityBottles by remember { mutableStateOf("1") }
     var comment by remember { mutableStateOf("") }
 
     val prod = StockRepository.products.find { it.id == selectedProductId }
     val qb = quantityBottles.toIntOrNull() ?: 1
-    val bpc = if ((prod?.bottlesPerCrate ?: 12) > 0) prod!!.bottlesPerCrate else 12
+    val bpc = prod?.bottlesPerCrate?.takeIf { it > 0 } ?: 12
     val loss = ((prod?.unitPrice ?: 0.0) / bpc) * qb
 
-    ModalDialog(title = "Déclarer un Produit Gâté / Avarie", isOpen = isOpen, onClose = onClose) {
+    val strings = LocalLanguage.current.strings()
+    ModalDialog(title = strings.modalSpoiledTitle, isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-            FormField(label = "Sélectionner le Produit") {
+            FormField(label = strings.fieldSelectProduct) {
                 Select(
                     Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
                         onChange { selectedProductId = it.value ?: "" }
                     }
                 ) {
                     StockRepository.products.forEach { p ->
-                        Option(p.id, attrs = { if (p.id == selectedProductId) selected() }) {
+                        Option(p.id, attrs = { if (p.id == selectedProductId) attr("selected", "") }) {
                             Text("${p.name} (${p.bottlesPerCrate} btles/casier)")
                         }
                     }
                 }
             }
 
-            FormField(label = "Quantité en Bouteilles") {
+            FormField(label = strings.fieldBottleQty) {
                 AppTextInput(
                     value = quantityBottles,
                     onValueChange = { quantityBottles = it },
@@ -695,7 +986,7 @@ fun QuickSpoiledModal(isOpen: Boolean, onClose: () -> Unit) {
                 )
             }
 
-            FormField(label = "Commentaire / Cause de l'avarie") {
+            FormField(label = strings.fieldComment) {
                 AppTextInput(
                     value = comment,
                     onValueChange = { comment = it },
@@ -714,7 +1005,7 @@ fun QuickSpoiledModal(isOpen: Boolean, onClose: () -> Unit) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Span(Modifier.fontWeight(FontWeight.Bold).color(Color.rgb(0x991B1B)).toAttrs()) {
-                        Text("Perte Financière Estimée : ")
+                        Text(strings.estimatedLoss)
                     }
                     Spacer()
                     Span(Modifier.fontWeight(FontWeight.Bold).fontSize(1.1.cssRem).color(Color.rgb(0x991B1B)).toAttrs()) {
@@ -725,9 +1016,9 @@ fun QuickSpoiledModal(isOpen: Boolean, onClose: () -> Unit) {
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = "Enregistrer l'Avarie",
+                    text = strings.btnSaveSpoiled,
                     onClick = {
                         if (selectedProductId.isNotBlank() && qb > 0) {
                             StockRepository.recordSpoiled(
@@ -748,6 +1039,7 @@ fun QuickSpoiledModal(isOpen: Boolean, onClose: () -> Unit) {
 
 @Composable
 fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
+    if (!isOpen) return
     var debtorName by remember { mutableStateOf("") }
     var selectedProductId by remember { mutableStateOf(StockRepository.products.firstOrNull()?.id ?: "") }
     var quantityCrates by remember { mutableStateOf("1") }
@@ -755,15 +1047,18 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
     var phone by remember { mutableStateOf("") }
 
     val prod = StockRepository.products.find { it.id == selectedProductId }
-    val cratesInt = quantityCrates.toIntOrNull() ?: 1
+    val supportsHalfCrate = prod?.supportsHalfCrate() == true
+    val cratesDbl = quantityCrates.toDoubleOrNull() ?: 1.0
     val pu = prod?.unitPrice ?: 0.0
-    val total = cratesInt * pu
+    val total = cratesDbl * pu
     val paid = amountPaid.toDoubleOrNull() ?: 0.0
     val remaining = (total - paid).coerceAtLeast(0.0)
 
-    ModalDialog(title = "Enregistrer une Dette Client", isOpen = isOpen, onClose = onClose) {
+    val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
+    ModalDialog(title = strings.modalDebtTitle, isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-            FormField(label = "Nom du Débiteur") {
+            FormField(label = strings.fieldDebtorName) {
                 AppTextInput(
                     value = debtorName,
                     onValueChange = { debtorName = it },
@@ -773,30 +1068,59 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
                 )
             }
 
-            FormField(label = "Produit dû") {
+            FormField(label = strings.fieldProductOwed) {
                 Select(
                     Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
                         onChange { selectedProductId = it.value ?: "" }
                     }
                 ) {
                     StockRepository.products.forEach { p ->
-                        Option(p.id, attrs = { if (p.id == selectedProductId) selected() }) {
-                            Text("${p.name} — ${formatFcfa(p.unitPrice)}/casier")
+                        Option(p.id, attrs = { if (p.id == selectedProductId) attr("selected", "") }) {
+                            Text("${p.name} — ${formatFcfa(p.unitPrice)}/${strings.crates}${if (p.supportsHalfCrate()) " [Demi-casier ok]" else ""}")
                         }
                     }
                 }
             }
 
-            FormField(label = "Quantité en Casiers dus") {
-                AppTextInput(
-                    value = quantityCrates,
-                    onValueChange = { quantityCrates = it },
-                    type = "number",
-                    modifier = Modifier.fillMaxWidth()
-                )
+            FormField(label = if (supportsHalfCrate) "${strings.fieldCratesOwed} (demi-casier autorisé : 0.5, 1.5...)" else strings.fieldCratesOwed) {
+                Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
+                    org.jetbrains.compose.web.dom.Input(
+                        type = org.jetbrains.compose.web.attributes.InputType.Number,
+                        attrs = Modifier.fillMaxWidth()
+                            .padding(leftRight = 0.75.cssRem, topBottom = 0.45.cssRem)
+                            .borderRadius(8.px)
+                            .border(1.px, LineStyle.Solid, palette.cardBorder)
+                            .backgroundColor(palette.inputBackground)
+                            .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                            .toAttrs {
+                                value(quantityCrates)
+                                attr("step", if (supportsHalfCrate) "0.5" else "1")
+                                attr("min", "0.5")
+                                onInput { quantityCrates = it.value?.toString() ?: "1" }
+                            }
+                    )
+                    if (supportsHalfCrate) {
+                        Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                            listOf("0.5", "1", "1.5", "2", "3", "5").forEach { preset ->
+                                Button(
+                                    onClick = { quantityCrates = preset },
+                                    Modifier
+                                        .fontSize(0.72.cssRem)
+                                        .padding(leftRight = 0.45.cssRem, topBottom = 0.15.cssRem)
+                                        .borderRadius(12.px)
+                                        .backgroundColor(if (quantityCrates == preset) palette.brand.primary else palette.nearBackground)
+                                        .color(if (quantityCrates == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                        .border(1.px, LineStyle.Solid, palette.cardBorder)
+                                ) {
+                                    Text("$preset cas.")
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            FormField(label = "Montant Avancé / Payé (FCFA)") {
+            FormField(label = strings.fieldAmountPaid) {
                 AppTextInput(
                     value = amountPaid,
                     onValueChange = { amountPaid = it },
@@ -805,7 +1129,7 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
                 )
             }
 
-            FormField(label = "Téléphone Débiteur (Optionnel)") {
+            FormField(label = strings.fieldPhone) {
                 AppTextInput(
                     value = phone,
                     onValueChange = { phone = it },
@@ -825,7 +1149,7 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
                 Column(Modifier.fillMaxWidth().gap(0.3.cssRem)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Span(Modifier.color(Color.rgb(0x991B1B)).fontSize(0.9.cssRem).toAttrs()) {
-                            Text("Prix Calculé Automatiquement ($cratesInt casiers × ${formatFcfa(pu)}) : ")
+                            Text(strings.totalDebt)
                         }
                         Spacer()
                         Span(Modifier.fontWeight(FontWeight.Bold).color(Color.rgb(0x991B1B)).toAttrs()) {
@@ -834,7 +1158,7 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Span(Modifier.fontWeight(FontWeight.Bold).color(Color.rgb(0x991B1B)).fontSize(1.05.cssRem).toAttrs()) {
-                            Text("Reste à Payer : ")
+                            Text(strings.remainingDebt)
                         }
                         Spacer()
                         Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.15.cssRem).color(Color.rgb(0xDC2626)).toAttrs()) {
@@ -846,15 +1170,15 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = "Enregistrer la Dette",
+                    text = strings.btnSaveDebt,
                     onClick = {
-                        if (debtorName.isNotBlank() && selectedProductId.isNotBlank() && cratesInt > 0) {
+                        if (debtorName.isNotBlank() && selectedProductId.isNotBlank() && cratesDbl > 0.0) {
                             StockRepository.addDebt(
                                 debtorName = debtorName,
                                 productId = selectedProductId,
-                                quantityCrates = cratesInt,
+                                quantityCrates = cratesDbl,
                                 amountPaid = paid,
                                 phone = phone
                             )
@@ -871,14 +1195,16 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
 
 @Composable
 fun QuickExpenseModal(isOpen: Boolean, onClose: () -> Unit) {
+    if (!isOpen) return
     var motive by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Manutention") }
     var amount by remember { mutableStateOf("") }
     var beneficiary by remember { mutableStateOf("") }
 
-    ModalDialog(title = "Enregistrer une Dépense", isOpen = isOpen, onClose = onClose) {
+    val strings = LocalLanguage.current.strings()
+    ModalDialog(title = strings.modalExpenseTitle, isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-            FormField(label = "Motif de la Dépense") {
+            FormField(label = strings.fieldExpenseLabel) {
                 AppTextInput(
                     value = motive,
                     onValueChange = { motive = it },
@@ -888,7 +1214,7 @@ fun QuickExpenseModal(isOpen: Boolean, onClose: () -> Unit) {
                 )
             }
 
-            FormField(label = "Catégorie") {
+            FormField(label = strings.fieldExpenseCategory) {
                 Select(
                     Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
                         onChange { category = it.value ?: "Manutention" }
@@ -902,7 +1228,7 @@ fun QuickExpenseModal(isOpen: Boolean, onClose: () -> Unit) {
                 }
             }
 
-            FormField(label = "Montant Dépensé (FCFA)") {
+            FormField(label = strings.fieldExpenseAmount) {
                 AppTextInput(
                     value = amount,
                     onValueChange = { amount = it },
@@ -924,9 +1250,9 @@ fun QuickExpenseModal(isOpen: Boolean, onClose: () -> Unit) {
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = "Enregistrer la Dépense",
+                    text = strings.btnSaveExpense,
                     onClick = {
                         val amt = amount.toDoubleOrNull() ?: 0.0
                         if (motive.isNotBlank() && amt > 0.0) {
@@ -949,13 +1275,15 @@ fun QuickExpenseModal(isOpen: Boolean, onClose: () -> Unit) {
 
 @Composable
 fun StockAuditQuickModal(isOpen: Boolean, onClose: () -> Unit) {
+    if (!isOpen) return
     val rows = StockRepository.getInventoryRows()
     val palette = ColorMode.current.toSitePalette()
 
-    ModalDialog(title = "État Instantané des Stocks & Audit", isOpen = isOpen, onClose = onClose, maxWidth = 55.cssRem) {
+    val strings = LocalLanguage.current.strings()
+    ModalDialog(title = strings.modalAuditTitle, isOpen = isOpen, onClose = onClose, maxWidth = 55.cssRem) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
             Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                Text("Vue globale du stock théorique calculé vs stock physique compté. Saisissez le reste physique pour calculer l'écart en direct.")
+                Text("Vue globale du stock théorique calculé vs stock physique compté.")
             }
 
             Div(
@@ -970,12 +1298,12 @@ fun StockAuditQuickModal(isOpen: Boolean, onClose: () -> Unit) {
                 ) {
                     Thead {
                         Tr(Modifier.backgroundColor(palette.nearBackground).toAttrs()) {
-                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("Produit") }
-                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("Initial + Entrées") }
-                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("Sorties") }
-                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("Reste Théorique") }
-                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("Reste Physique") }
-                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("Écart") }
+                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProduct) }
+                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colInitialStock + " + " + strings.colEntries) }
+                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colOutflows) }
+                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colRemainingTheoretical) }
+                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colRemainingPhysical) }
+                            Th(Modifier.padding(0.5.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colDifference) }
                         }
                     }
                     Tbody {
@@ -1015,7 +1343,7 @@ fun StockAuditQuickModal(isOpen: Boolean, onClose: () -> Unit) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
                 AppButton(
-                    text = "Fermer l'Audit",
+                    text = strings.cancel,
                     onClick = onClose
                 )
             }

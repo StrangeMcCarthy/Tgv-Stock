@@ -11,6 +11,7 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.*
+import com.varabyte.kobweb.compose.ui.styleModifier
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.Page
 import com.varabyte.kobweb.core.data.add
@@ -18,7 +19,6 @@ import com.varabyte.kobweb.core.init.InitRoute
 import com.varabyte.kobweb.core.init.InitRouteContext
 import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Input
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
@@ -68,7 +68,7 @@ fun ExpensesPage() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.gap(0.3.cssRem)) {
-                Span(HeadlineTextStyle.toAttrs()) {
+                Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text("Registre des Dépenses & Charges")
                 }
                 Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
@@ -92,7 +92,7 @@ fun ExpensesPage() {
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .gridTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
                 .gap(1.2.cssRem)
                 .toAttrs()
         ) {
@@ -116,7 +116,7 @@ fun ExpensesPage() {
                 title = "Manutention & Logistique",
                 value = formatFcfa(expenses.filter { it.category == "Manutention" }.sumOf { it.amount }),
                 subtitle = "Frais de déchargement et portage",
-                icon = { FaTruckLoading() },
+                icon = { FaTruck() },
                 accentColor = palette.brand.primary
             )
         }
@@ -148,20 +148,12 @@ fun ExpensesPage() {
 
                 Spacer()
 
-                Input(
-                    type = InputType.Search,
+                AppTextInput(
                     value = searchQuery,
-                    attrs = Modifier
-                        .width(16.cssRem)
-                        .padding(leftRight = 0.8.cssRem, topBottom = 0.4.cssRem)
-                        .borderRadius(8.px)
-                        .border(1.px, LineStyle.Solid, palette.cardBorder)
-                        .backgroundColor(palette.inputBackground)
-                        .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
-                        .toAttrs {
-                            placeholder("Chercher motif ou bénéficiaire...")
-                            onInput { searchQuery = it.value }
-                        }
+                    onValueChange = { searchQuery = it },
+                    placeholderText = "Chercher motif ou bénéficiaire...",
+                    type = "search",
+                    modifier = Modifier.width(16.cssRem)
                 )
             }
         }

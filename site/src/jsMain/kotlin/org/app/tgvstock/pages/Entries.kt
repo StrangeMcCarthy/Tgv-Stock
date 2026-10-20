@@ -11,6 +11,7 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.*
+import com.varabyte.kobweb.compose.ui.styleModifier
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.Page
 import com.varabyte.kobweb.core.data.add
@@ -18,7 +19,6 @@ import com.varabyte.kobweb.core.init.InitRoute
 import com.varabyte.kobweb.core.init.InitRouteContext
 import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Input
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
@@ -28,14 +28,16 @@ import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
 fun initEntriesPage(ctx: InitRouteContext) {
-    ctx.data.add(PageLayoutData("Arrivages & Entrées en Stock"))
+    ctx.data.add(PageLayoutData("Arrivals & Stock Entries"))
 }
 
 @Page
@@ -43,6 +45,7 @@ fun initEntriesPage(ctx: InitRouteContext) {
 @Composable
 fun EntriesPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
     var showNewEntryModal by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var filterDate by remember { mutableStateOf("") }
@@ -54,7 +57,7 @@ fun EntriesPage() {
         matchesDate && matchesSearch
     }
 
-    val totalCratesReceived = filteredEntries.sumOf { it.quantityCrates }
+    val totalCratesReceived = filteredEntries.sumOf { it.effectiveCrates }
 
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
@@ -64,55 +67,67 @@ fun EntriesPage() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.gap(0.3.cssRem)) {
-                Span(HeadlineTextStyle.toAttrs()) {
-                    Text("Arrivages & Entrées de Stock")
+                Span(HeadlineTextStyle.toModifier().toAttrs()) {
+                    Text(strings.entriesPageTitle)
                 }
                 Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Enregistrement des livraisons de bières et boissons reçues des brasseries et fournisseurs.")
+                    Text(strings.entriesPageSubtitle)
                 }
             }
 
             Spacer()
 
             AppButton(
-                text = "Enregistrer un Arrivage",
+                text = strings.btnNewEntry,
                 onClick = { showNewEntryModal = true },
-                icon = { FaTruckLoading() },
+                icon = { FaTruck() },
                 backgroundColor = palette.brand.primary
             )
         }
+
+        val totalBonusBottles = filteredEntries.filter { it.calculatedTotalExtraBottles > 0 }.sumOf { it.calculatedTotalExtraBottles }
 
         // Summary Cards
         Div(
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .gridTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
                 .gap(1.2.cssRem)
                 .toAttrs()
         ) {
             StatCard(
-                title = "Total Casiers Réceptionnés",
-                value = "$totalCratesReceived casiers",
-                subtitle = "${filteredEntries.size} bons de livraison enregistrés",
+                title = strings.statTotalReceived,
+                value = "$totalCratesReceived ${strings.crates}",
+                subtitle = "${filteredEntries.size} ${strings.statTotalReceivedSub}",
                 icon = { FaBoxesStacked() },
                 accentColor = palette.brand.primary
             )
 
             StatCard(
-                title = "Arrivages Aujourd'hui",
-                value = "${entries.filter { it.date == StockRepository.todayString() }.sumOf { it.quantityCrates }} casiers",
-                subtitle = "Reçus le ${StockRepository.todayString()}",
-                icon = { FaTruck() },
+                title = "Extras & Bonus Reçus",
+                value = "+$totalBonusBottles btl",
+                subtitle = "Bouteilles supplémentaires brasserie",
+                icon = { FaBoxesStacked() },
                 accentColor = palette.success
             )
 
+            val todayEntriesCrates = entries.filter { it.date == StockRepository.todayString() }.sumOf { it.quantityCrates }
+            val todayEntriesCratesStr = if (todayEntriesCrates == todayEntriesCrates.toLong().toDouble()) todayEntriesCrates.toLong().toString() else todayEntriesCrates.toString()
             StatCard(
-                title = "Fournisseurs Principaux",
-                value = "${entries.map { it.supplier }.distinct().size} partenaires",
+                title = strings.statTodayEntries,
+                value = "$todayEntriesCratesStr ${strings.crates}",
+                subtitle = "${strings.statTodayEntriesSub} ${StockRepository.todayString()}",
+                icon = { FaTruck() },
+                accentColor = Color.rgb(0x3B82F6)
+            )
+
+            StatCard(
+                title = strings.statMainSuppliers,
+                value = "${entries.map { it.supplier }.distinct().size} ${strings.statMainSuppliersSub}",
                 subtitle = "Boissons du Cameroun, Diageo Guinness, etc.",
                 icon = { FaBuilding() },
-                accentColor = Color.rgb(0x3B82F6)
+                accentColor = Color.rgb(0x8B5CF6)
             )
         }
 
@@ -124,47 +139,31 @@ fun EntriesPage() {
             ) {
                 Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                     Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                        Text("Filtrer par Date :")
+                        Text(strings.filterByDate)
                     }
-                    Input(
-                        type = InputType.Date,
+                    AppTextInput(
                         value = filterDate,
-                        attrs = Modifier
-                            .padding(0.4.cssRem)
-                            .borderRadius(6.px)
-                            .border(1.px, LineStyle.Solid, palette.cardBorder)
-                            .backgroundColor(palette.inputBackground)
-                            .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
-                            .toAttrs {
-                                onInput { filterDate = it.value }
-                            }
+                        onValueChange = { filterDate = it },
+                        type = "date"
                     )
                     if (filterDate.isNotBlank()) {
                         Button(
                             onClick = { filterDate = "" },
                             Modifier.fontSize(0.75.cssRem).padding(leftRight = 0.5.cssRem, topBottom = 0.3.cssRem)
                         ) {
-                            Text("Toutes les dates")
+                            Text(strings.allDates)
                         }
                     }
                 }
 
                 Spacer()
 
-                Input(
-                    type = InputType.Search,
+                AppTextInput(
                     value = searchQuery,
-                    attrs = Modifier
-                        .width(16.cssRem)
-                        .padding(leftRight = 0.8.cssRem, topBottom = 0.4.cssRem)
-                        .borderRadius(8.px)
-                        .border(1.px, LineStyle.Solid, palette.cardBorder)
-                        .backgroundColor(palette.inputBackground)
-                        .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
-                        .toAttrs {
-                            placeholder("Chercher produit ou fournisseur...")
-                            onInput { searchQuery = it.value }
-                        }
+                    onValueChange = { searchQuery = it },
+                    placeholderText = strings.placeholderSearchEntry,
+                    type = "search",
+                    modifier = Modifier.width(16.cssRem)
                 )
             }
         }
@@ -192,19 +191,20 @@ fun EntriesPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("DATE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("PRODUIT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("QUANTITÉ ENTRÉE (CASIERS)") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("FOURNISSEUR / BRASSERIE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("NOTES / BORDEREAU") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTION") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.date) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProduct) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colQuantityEntered) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("Extras / Écarts") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSupplier) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.notes) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.actions) }
                             }
                         }
                         Tbody {
                             if (filteredEntries.isEmpty()) {
                                 Tr {
-                                    Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "6") }) {
-                                        Text("Aucun arrivage enregistré.")
+                                    Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "7") }) {
+                                        Text(strings.noEntriesRecorded)
                                     }
                                 }
                             } else {
@@ -213,7 +213,49 @@ fun EntriesPage() {
                                         Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) { Text(entry.date) }
                                         Td(Modifier.padding(0.75.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text(entry.productName) }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).color(palette.brand.primary).toAttrs()) {
-                                            Text("+${entry.quantityCrates} casiers")
+                                            val displayQty = if (entry.effectiveCrates == entry.effectiveCrates.toLong().toDouble()) entry.effectiveCrates.toLong().toString() else entry.effectiveCrates.toString()
+                                            Text("+$displayQty ${strings.crates}")
+                                        }
+                                        Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
+                                            val totalBonus = entry.calculatedTotalExtraBottles
+                                            if (entry.extras != 0 || totalBonus != 0) {
+                                                val isPositive = totalBonus > 0 || entry.extras > 0
+                                                val sign = if (isPositive) "+" else ""
+                                                val extrasColor = if (isPositive) palette.success else palette.danger
+                                                Column(
+                                                    Modifier.fillMaxWidth(),
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    Box(
+                                                        Modifier
+                                                            .backgroundColor(if (isPositive) Color.rgb(0xD1FAE5) else Color.rgb(0xFEE2E2))
+                                                            .color(extrasColor)
+                                                            .borderRadius(10.px)
+                                                            .padding(leftRight = 0.5.cssRem, topBottom = 0.15.cssRem)
+                                                            .fontSize(0.78.cssRem)
+                                                            .fontWeight(FontWeight.Bold)
+                                                            .display(DisplayStyle.InlineBlock)
+                                                    ) {
+                                                        if (entry.extras != 0) {
+                                                            Text("$sign${entry.extras} btl/casier")
+                                                        } else {
+                                                            Text("$sign$totalBonus btl")
+                                                        }
+                                                    }
+                                                    if (entry.extras != 0 && entry.quantityCrates > 1.0) {
+                                                        Span(Modifier.fontSize(0.72.cssRem).color(extrasColor).fontWeight(FontWeight.SemiBold).margin(top = 0.1.cssRem).toAttrs()) {
+                                                            Text("($sign$totalBonus btl au total)")
+                                                        }
+                                                    }
+                                                    if (entry.motif.isNotBlank()) {
+                                                        Span(Modifier.fontSize(0.72.cssRem).color(palette.textMuted).margin(top = 0.1.cssRem).toAttrs()) {
+                                                            Text(entry.motif)
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                Span(Modifier.color(palette.textMuted).fontSize(0.8.cssRem).toAttrs()) { Text("—") }
+                                            }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).toAttrs()) { Text(entry.supplier) }
                                         Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) {

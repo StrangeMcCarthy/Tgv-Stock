@@ -9,20 +9,24 @@ import kotlin.js.Date
 import kotlin.math.roundToInt
 
 object StockRepository {
-    private const val KEY_PRODUCTS = "tgv_stock_products_v1"
-    private const val KEY_PACKAGING = "tgv_stock_packaging_v1"
-    private const val KEY_ENTRIES = "tgv_stock_entries_v1"
-    private const val KEY_SALES = "tgv_stock_sales_v1"
-    private const val KEY_SPOILED = "tgv_stock_spoiled_v1"
-    private const val KEY_DEBTS = "tgv_stock_debts_v1"
-    private const val KEY_EXPENSES = "tgv_stock_expenses_v1"
-    private const val KEY_VERSEMENTS = "tgv_stock_versements_v1"
-    private const val KEY_PHYSICAL_COUNTS = "tgv_stock_physical_counts_v1"
+    private const val KEY_PRODUCTS = "tgv_stock_products_v2"
+    private const val KEY_PACKAGING = "tgv_stock_packaging_v2"
+    private const val KEY_PKG_MOVEMENTS = "tgv_stock_pkg_movements_v2"
+    private const val KEY_ENTRIES = "tgv_stock_entries_v2"
+    private const val KEY_SALES = "tgv_stock_sales_v2"
+    private const val KEY_SPOILED = "tgv_stock_spoiled_v2"
+    private const val KEY_DEBTS = "tgv_stock_debts_v2"
+    private const val KEY_EXPENSES = "tgv_stock_expenses_v2"
+    private const val KEY_VERSEMENTS = "tgv_stock_versements_v2"
+    private const val KEY_PHYSICAL_COUNTS = "tgv_stock_physical_counts_v2"
 
     var products by mutableStateOf(listOf<Product>())
         private set
 
     var packaging by mutableStateOf(listOf<Packaging>())
+        private set
+
+    var packagingMovements by mutableStateOf(listOf<PackagingMovement>())
         private set
 
     var entries by mutableStateOf(listOf<StockEntry>())
@@ -72,6 +76,7 @@ object StockRepository {
     private fun loadAll() {
         products = loadProducts()
         packaging = loadPackaging()
+        packagingMovements = loadPackagingMovements()
         entries = loadEntries()
         sales = loadSales()
         spoiled = loadSpoiled()
@@ -80,62 +85,6 @@ object StockRepository {
         versements = loadVersements()
         physicalCounts = loadPhysicalCounts()
 
-        // If newly initialized with defaults and empty sales, create initial realistic sample transactions
-        if (sales.isEmpty() && entries.isEmpty() && products.isNotEmpty()) {
-            seedSampleTransactions()
-        }
-    }
-
-    private fun seedSampleTransactions() {
-        val today = todayString()
-        // Sample entries
-        val e1 = StockEntry(generateId("ent"), today, "p2", "33 EXPORT 65", 20, "Boissons du Cameroun", "Livraison hebdo camion #4")
-        val e2 = StockEntry(generateId("ent"), today, "p6", "CASTEL 65", 15, "Boissons du Cameroun", "Livraison hebdo camion #4")
-        val e3 = StockEntry(generateId("ent"), today, "p14", "P GUINNESS", 10, "Diageo Guinness", "Approvisionnement direct")
-        entries = listOf(e1, e2, e3)
-        saveEntries()
-
-        // Sample sales
-        val s1 = Sale(generateId("sal"), today, "p2", "33 EXPORT 65", 5, 9500.0, 47500.0, "Dépôt", "Bar Le Palmier", "Espèces", false)
-        val s2 = Sale(generateId("sal"), today, "p6", "CASTEL 65", 4, 9500.0, 38000.0, "Dépôt", "Comptoir", "Espèces", false)
-        val s3 = Sale(generateId("sal"), today, "p1", "MANYAN", 3, 8000.0, 24000.0, "Bar", "Bar Central", "Espèces", false)
-        sales = listOf(s1, s2, s3)
-        saveSales()
-
-        // Sample spoiled
-        val sp1 = SpoiledProduct(generateId("sp"), today, "p2", "33 EXPORT 65", 2, "Casse bouteille au déchargement camion", (9500.0 / 12) * 2)
-        spoiled = listOf(sp1)
-        saveSpoiled()
-
-        // Sample debt
-        val d1 = Debt(
-            id = generateId("deb"),
-            date = today,
-            debtorName = "Franky",
-            productId = "p14",
-            productName = "P GUINNESS",
-            quantityCrates = 2,
-            unitPrice = 21000.0,
-            totalAmount = 42000.0,
-            amountPaid = 10000.0,
-            remainingAmount = 32000.0,
-            status = "Partiel",
-            phone = "690000000",
-            notes = "Avance reçue 10.000 FCFA"
-        )
-        debts = listOf(d1)
-        saveDebts()
-
-        // Sample expense
-        val ex1 = Expenditure(generateId("exp"), today, "Manutention déchargement camion", "Manutention", 5000.0, "Équipe débardeurs")
-        val ex2 = Expenditure(generateId("exp"), today, "Achat blocs de glace pour frigo", "Divers", 2500.0, "Glace Express")
-        expenses = listOf(ex1, ex2)
-        saveExpenses()
-
-        // Sample versement
-        val v1 = CashVersement(generateId("ver"), today, "Vendeur ZAMBOY", 80000.0, "Versement partiel midi")
-        versements = listOf(v1)
-        saveVersements()
     }
 
     private fun loadProducts(): List<Product> {
@@ -218,7 +167,10 @@ object StockRepository {
                     date = d.date as String,
                     productId = d.productId as String,
                     productName = d.productName as String,
-                    quantityCrates = (d.quantityCrates as Number).toInt(),
+                    quantityCrates = (d.quantityCrates as Number).toDouble(),
+                    extras = (d.extras as? Number)?.toInt() ?: 0,
+                    totalExtras = (d.totalExtras as? Number)?.toInt() ?: 0,
+                    motif = (d.motif as? String) ?: "",
                     supplier = (d.supplier as? String) ?: "Fournisseur",
                     notes = (d.notes as? String) ?: ""
                 )
@@ -236,6 +188,9 @@ object StockRepository {
             obj.productId = e.productId
             obj.productName = e.productName
             obj.quantityCrates = e.quantityCrates
+            obj.extras = e.extras
+            obj.totalExtras = e.totalExtras
+            obj.motif = e.motif
             obj.supplier = e.supplier
             obj.notes = e.notes
             obj
@@ -253,7 +208,7 @@ object StockRepository {
                     date = d.date as String,
                     productId = d.productId as String,
                     productName = d.productName as String,
-                    quantityCrates = (d.quantityCrates as Number).toInt(),
+                    quantityCrates = (d.quantityCrates as Number).toDouble(),
                     unitPrice = (d.unitPrice as Number).toDouble(),
                     totalAmount = (d.totalAmount as Number).toDouble(),
                     destination = (d.destination as? String) ?: "Dépôt",
@@ -332,7 +287,7 @@ object StockRepository {
                     debtorName = d.debtorName as String,
                     productId = d.productId as String,
                     productName = d.productName as String,
-                    quantityCrates = (d.quantityCrates as Number).toInt(),
+                    quantityCrates = (d.quantityCrates as Number).toDouble(),
                     unitPrice = (d.unitPrice as Number).toDouble(),
                     totalAmount = (d.totalAmount as Number).toDouble(),
                     amountPaid = (d.amountPaid as? Number)?.toDouble() ?: 0.0,
@@ -504,11 +459,99 @@ object StockRepository {
 
     fun deletePackaging(id: String) {
         packaging = packaging.filterNot { it.id == id }
+        packagingMovements = packagingMovements.filterNot { it.packagingId == id }
         savePackaging()
+        savePackagingMovements()
+    }
+
+    /**
+     * Records a packaging movement and applies its deltas to the target packaging.
+     * All quantities in the movement are deltas (positive = gain, negative = loss).
+     */
+    fun recordPackagingMovement(
+        packagingId: String,
+        movementType: String,
+        quantityEmpty: Int,
+        quantityFull: Int,
+        notes: String = "",
+        contactName: String = ""
+    ): PackagingMovement? {
+        val pkg = packaging.find { it.id == packagingId } ?: return null
+        val movement = PackagingMovement(
+            id = generateId("pmv"),
+            date = todayString(),
+            packagingId = packagingId,
+            packagingName = pkg.name,
+            movementType = movementType,
+            quantityEmpty = quantityEmpty,
+            quantityFull = quantityFull,
+            notes = notes.trim(),
+            contactName = contactName.trim()
+        )
+        packagingMovements = listOf(movement) + packagingMovements // newest first
+        savePackagingMovements()
+
+        // Apply deltas to the packaging
+        val updated = pkg.copy(
+            emptyCrates = (pkg.emptyCrates + quantityEmpty).coerceAtLeast(0),
+            fullCrates = (pkg.fullCrates + quantityFull).coerceAtLeast(0),
+            lastUpdated = todayString()
+        )
+        packaging = packaging.map { if (it.id == packagingId) updated else it }
+        savePackaging()
+        return movement
+    }
+
+    private fun loadPackagingMovements(): List<PackagingMovement> {
+        val json = window.localStorage.getItem(KEY_PKG_MOVEMENTS) ?: return emptyList()
+        return try {
+            val parsed = JSON.parse<Array<dynamic>>(json)
+            parsed.map { d ->
+                PackagingMovement(
+                    id = d.id as String,
+                    date = (d.date as? String) ?: todayString(),
+                    packagingId = d.packagingId as String,
+                    packagingName = (d.packagingName as? String) ?: "",
+                    movementType = (d.movementType as? String) ?: "AJUSTEMENT_VIDE",
+                    quantityEmpty = (d.quantityEmpty as? Number)?.toInt() ?: 0,
+                    quantityFull = (d.quantityFull as? Number)?.toInt() ?: 0,
+                    notes = (d.notes as? String) ?: "",
+                    contactName = (d.contactName as? String) ?: ""
+                )
+            }
+        } catch (_: Throwable) {
+            emptyList()
+        }
+    }
+
+    private fun savePackagingMovements() {
+        val arr = packagingMovements.map { m ->
+            val obj = js("{}")
+            obj.id = m.id
+            obj.date = m.date
+            obj.packagingId = m.packagingId
+            obj.packagingName = m.packagingName
+            obj.movementType = m.movementType
+            obj.quantityEmpty = m.quantityEmpty
+            obj.quantityFull = m.quantityFull
+            obj.notes = m.notes
+            obj.contactName = m.contactName
+            obj
+        }.toTypedArray()
+        window.localStorage.setItem(KEY_PKG_MOVEMENTS, JSON.stringify(arr))
     }
 
     // --- Stock Entries ---
-    fun addEntry(productId: String, quantityCrates: Int, supplier: String, date: String = todayString(), notes: String = ""): StockEntry {
+    fun addEntry(
+        productId: String,
+        quantityCrates: Double,
+        extras: Int = 0,
+        totalExtras: Int = 0,
+        motif: String = "",
+        supplier: String,
+        date: String = todayString(),
+        notes: String = ""
+    ): StockEntry {
         val prod = products.find { it.id == productId } ?: error("Produit non trouvé")
         val entry = StockEntry(
             id = generateId("ent"),
@@ -516,6 +559,9 @@ object StockRepository {
             productId = productId,
             productName = prod.name,
             quantityCrates = quantityCrates,
+            extras = extras,
+            totalExtras = totalExtras,
+            motif = motif.trim(),
             supplier = supplier.trim(),
             notes = notes.trim()
         )
@@ -532,7 +578,7 @@ object StockRepository {
     // --- Sales ---
     fun recordSale(
         productId: String,
-        quantityCrates: Int,
+        quantityCrates: Double,
         unitPrice: Double? = null,
         destination: String = "Dépôt",
         customerName: String = "Comptoir",
@@ -614,7 +660,7 @@ object StockRepository {
     fun addDebt(
         debtorName: String,
         productId: String,
-        quantityCrates: Int,
+        quantityCrates: Double,
         unitPrice: Double? = null,
         amountPaid: Double = 0.0,
         phone: String = "",
@@ -722,11 +768,15 @@ object StockRepository {
         val targetSpoiled = if (filterDate != null) spoiled.filter { it.date == filterDate } else spoiled
 
         return products.map { p ->
-            val pEntries = targetEntries.filter { it.productId == p.id }.sumOf { it.quantityCrates }
+            val pEntriesList = targetEntries.filter { it.productId == p.id }
+            val pEntries = pEntriesList.sumOf { it.effectiveCrates }
+            val pBonusBottles = pEntriesList.sumOf { it.calculatedTotalExtraBottles }
             val totalStock = p.stockInitial + pEntries
 
             val pSales = targetSales.filter { it.productId == p.id }
+            // Bar transfers: recorded for stock tracking between sale and stock movement, but NOT included in sold revenue
             val barSales = pSales.filter { it.destination == "Bar" }.sumOf { it.quantityCrates }
+            // Depot / wholesale sales: what was actually sold to customers
             val depotSales = pSales.filter { it.destination != "Bar" }.sumOf { it.quantityCrates }
             val totalSorties = barSales + depotSales
 
@@ -738,12 +788,15 @@ object StockRepository {
             val physicalCount = physicalCounts[p.id] ?: resteTheorique
             val ecart = ((physicalCount - resteTheorique) * 100.0).roundToInt() / 100.0
 
-            val montantVentes = pSales.sumOf { it.totalAmount }
+            // Revenue excludes bar transfers (they are internal movements, not sales)
+            val montantVentes = pSales.filter { it.destination != "Bar" }.sumOf { it.totalAmount }
+            val montantTransfertBar = pSales.filter { it.destination == "Bar" }.sumOf { it.totalAmount }
 
             InventoryRow(
                 product = p,
-                stockInitial = p.stockInitial,
+                stockInitial = p.stockInitial.toDouble(),
                 entrees = pEntries,
+                entreesBonusBottles = pBonusBottles,
                 totalStock = totalStock,
                 sortiesBar = barSales,
                 ventesQty = depotSales,
@@ -754,7 +807,8 @@ object StockRepository {
                 restePhysique = physicalCount,
                 ecart = ecart,
                 unitPrice = p.unitPrice,
-                montantVentes = montantVentes
+                montantVentes = montantVentes,
+                montantTransfertBar = montantTransfertBar
             )
         }
     }
@@ -766,7 +820,8 @@ object StockRepository {
         val targetExpenses = if (filterDate != null) expenses.filter { it.date == filterDate } else expenses
         val targetDebts = if (filterDate != null) debts.filter { it.date == filterDate } else debts
 
-        val totalVentes = targetSales.sumOf { it.totalAmount }
+        // Bar transfers are internal movements — exclude from cash reconciliation
+        val totalVentes = targetSales.filter { it.destination != "Bar" }.sumOf { it.totalAmount }
         val totalVersement = targetVersements.sumOf { it.amount }
         val totalAvarisValeur = targetSpoiled.sumOf { it.estimatedLoss }
         val totalDepenses = targetExpenses.sumOf { it.amount }
@@ -799,7 +854,22 @@ object StockRepository {
 
     fun getTodaySalesAmount(): Double {
         val today = todayString()
-        return sales.filter { it.date == today }.sumOf { it.totalAmount }
+        return sales.filter { it.date == today && it.destination != "Bar" }.sumOf { it.totalAmount }
+    }
+
+    fun getTodaySalesCrates(): Double {
+        val today = todayString()
+        return sales.filter { it.date == today && it.destination != "Bar" }.sumOf { it.quantityCrates }
+    }
+
+    fun getTodayBarTransfersAmount(): Double {
+        val today = todayString()
+        return sales.filter { it.date == today && it.destination == "Bar" }.sumOf { it.totalAmount }
+    }
+
+    fun getTodayBarTransfersCrates(): Double {
+        val today = todayString()
+        return sales.filter { it.date == today && it.destination == "Bar" }.sumOf { it.quantityCrates }
     }
 
     fun getTotalActiveDebtsAmount(): Double {

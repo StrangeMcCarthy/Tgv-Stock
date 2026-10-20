@@ -294,31 +294,47 @@ fun ReportsPage() {
                                 }
                             }
                             Tbody {
+                                fun Double.fmt() = if (this == this.toLong().toDouble()) this.toLong().toString() else this.toString()
                                 rows.forEach { r ->
                                     Tr {
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.SemiBold).toAttrs()) { Text(r.product.name) }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${r.stockInitial}") }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${r.entrees}") }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text("${r.totalStock}") }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${r.resteTheorique}") }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text("${r.totalSorties}") }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${r.sortiesBar}") }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text("${r.ventesQty}") }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(r.stockInitial.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
+                                            Text(r.entrees.fmt())
+                                            if (r.entreesBonusBottles > 0) {
+                                                Span(Modifier.fontSize(0.68.cssRem).color(Color.rgb(0x16A34A)).display(DisplayStyle.Block).toAttrs()) {
+                                                    Text("(+${r.entreesBonusBottles} btl)")
+                                                }
+                                            }
+                                        }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.totalStock.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(r.resteTheorique.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.totalSorties.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(r.sortiesBar.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.ventesQty.fmt()) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(r.unitPrice)) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.Bold).toAttrs()) { Text(formatFcfa(r.montantVentes)) }
                                     }
                                 }
 
                                 // Total Row
+                                val totalBonusInReport = rows.sumOf { it.entreesBonusBottles }
                                 Tr(Modifier.backgroundColor(Color.rgb(0xF3F4F6)).fontWeight(FontWeight.ExtraBold).toAttrs()) {
                                     Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("TOTAL GÉNÉRAL") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${rows.sumOf { it.stockInitial }}") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${rows.sumOf { it.entrees }}") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${rows.sumOf { it.totalStock }}") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${rows.sumOf { it.resteTheorique.toInt() }}") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${rows.sumOf { it.totalSorties }}") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${rows.sumOf { it.sortiesBar }}") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("${rows.sumOf { it.ventesQty }}") }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.stockInitial }.fmt()) }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
+                                        Text(rows.sumOf { it.entrees }.fmt())
+                                        if (totalBonusInReport > 0) {
+                                            Span(Modifier.fontSize(0.68.cssRem).color(Color.rgb(0x16A34A)).display(DisplayStyle.Block).toAttrs()) {
+                                                Text("(+$totalBonusInReport btl)")
+                                            }
+                                        }
+                                    }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.totalStock }.fmt()) }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.resteTheorique }.fmt()) }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.totalSorties }.fmt()) }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.sortiesBar }.fmt()) }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.ventesQty }.fmt()) }
                                     Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("—") }
                                     Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalVentes)) }
                                 }

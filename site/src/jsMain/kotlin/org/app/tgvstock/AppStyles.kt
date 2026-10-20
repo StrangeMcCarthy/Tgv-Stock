@@ -101,8 +101,8 @@ val ActionCardStyle = CssStyle.base {
         .padding(1.cssRem)
         .cursor(com.varabyte.kobweb.compose.css.Cursor.Pointer)
         .transition(
-            com.varabyte.kobweb.compose.css.CSSTransition("transform", 150.ms),
-            com.varabyte.kobweb.compose.css.CSSTransition("border-color", 150.ms),
-            com.varabyte.kobweb.compose.css.CSSTransition("box-shadow", 150.ms)
+            com.varabyte.kobweb.compose.css.Transition.of("transform", 150.ms),
+            com.varabyte.kobweb.compose.css.Transition.of("border-color", 150.ms),
+            com.varabyte.kobweb.compose.css.Transition.of("box-shadow", 150.ms)
         )
 }

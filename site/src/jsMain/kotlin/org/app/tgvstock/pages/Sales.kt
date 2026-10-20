@@ -42,6 +42,7 @@ fun initSalesPage(ctx: InitRouteContext) {
 fun SalesPage() {
     val palette = ColorMode.current.toSitePalette()
     var showNewSaleModal by remember { mutableStateOf(false) }
+    var saleModalDestination by remember { mutableStateOf("Dépôt") }
 
     var filterDate by remember { mutableStateOf("") }
     var filterDestination by remember { mutableStateOf("Tous") }
@@ -55,9 +56,11 @@ fun SalesPage() {
         matchesDate && matchesDest && matchesSearch
     }
 
-    val totalAmount = filteredSales.sumOf { it.totalAmount }
-    val totalCrates = filteredSales.sumOf { it.quantityCrates }
-    val barSalesAmount = filteredSales.filter { it.destination == "Bar" }.sumOf { it.totalAmount }
+    // Bar transfers are internal movements — not counted in revenue
+    val totalAmount = filteredSales.filter { it.destination != "Bar" }.sumOf { it.totalAmount }
+    val totalCrates = filteredSales.filter { it.destination != "Bar" }.sumOf { it.quantityCrates }
+    val barTransferAmount = filteredSales.filter { it.destination == "Bar" }.sumOf { it.totalAmount }
+    val barTransferCrates = filteredSales.filter { it.destination == "Bar" }.sumOf { it.quantityCrates }
     val creditSalesAmount = filteredSales.filter { it.isDebt || it.paymentMethod == "À Crédit" }.sumOf { it.totalAmount }
 
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
@@ -76,15 +79,28 @@ fun SalesPage() {
                 }
             }
 
-            Spacer()
-
-            AppButton(
-                text = "Enregistrer une Vente",
-                onClick = { showNewSaleModal = true },
-                icon = { FaCartPlus() },
-                backgroundColor = palette.success,
-                textColor = Colors.White
-            )
+            Row(Modifier.gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                AppButton(
+                    text = "Transfert Bar",
+                    onClick = {
+                        saleModalDestination = "Bar"
+                        showNewSaleModal = true
+                    },
+                    icon = { FaWineGlass() },
+                    backgroundColor = Color.rgb(0x7C3AED),
+                    textColor = Colors.White
+                )
+                AppButton(
+                    text = "Enregistrer une Vente",
+                    onClick = {
+                        saleModalDestination = "Dépôt"
+                        showNewSaleModal = true
+                    },
+                    icon = { FaCartPlus() },
+                    backgroundColor = palette.success,
+                    textColor = Colors.White
+                )
+            }
         }
 
         // Summary KPI cards
@@ -99,7 +115,7 @@ fun SalesPage() {
             StatCard(
                 title = "Total Recettes Ventes",
                 value = formatFcfa(totalAmount),
-                subtitle = "$totalCrates casiers au total",
+                subtitle = "${if (totalCrates == totalCrates.toLong().toDouble()) totalCrates.toLong().toString() else totalCrates.toString()} casiers (hors transferts bar)",
                 icon = { FaCashRegister() },
                 accentColor = palette.success
             )
@@ -122,8 +138,8 @@ fun SalesPage() {
 
             StatCard(
                 title = "Transferts Bar",
-                value = formatFcfa(barSalesAmount),
-                subtitle = "Consommation / Sortie vers bar",
+                value = formatFcfa(barTransferAmount),
+                subtitle = "${if (barTransferCrates == barTransferCrates.toLong().toDouble()) barTransferCrates.toLong().toString() else barTransferCrates.toString()} casiers transférés (déduits du stock, hors total vendu)",
                 icon = { FaWineGlass() },
                 accentColor = Color.rgb(0x8B5CF6)
             )
@@ -228,7 +244,12 @@ fun SalesPage() {
                                 }
                             } else {
                                 filteredSales.forEach { sale ->
-                                    Tr(Modifier.borderBottom(1.px, LineStyle.Solid, palette.cardBorder).toAttrs()) {
+                                    Tr(
+                                        Modifier
+                                            .backgroundColor(if (sale.destination == "Bar") Color.rgba(139, 92, 246, 0.06f) else Colors.Transparent)
+                                            .borderBottom(1.px, LineStyle.Solid, palette.cardBorder)
+                                            .toAttrs()
+                                    ) {
                                         Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) { Text(sale.date) }
                                         Td(Modifier.padding(0.75.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text(sale.productName) }
                                         Td(Modifier.padding(0.75.cssRem).toAttrs()) { Text(sale.customerName) }
@@ -246,13 +267,29 @@ fun SalesPage() {
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) {
-                                            Text("${sale.quantityCrates} casiers")
+                                            val qtyStr = if (sale.quantityCrates == sale.quantityCrates.toLong().toDouble())
+                                                sale.quantityCrates.toLong().toString()
+                                            else sale.quantityCrates.toString()
+                                            Text("$qtyStr casiers")
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) {
                                             Text(formatFcfa(sale.unitPrice))
                                         }
-                                        Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).fontWeight(FontWeight.Bold).color(palette.success).toAttrs()) {
-                                            Text(formatFcfa(sale.totalAmount))
+                                        Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) {
+                                            if (sale.destination == "Bar") {
+                                                Column(horizontalAlignment = Alignment.End) {
+                                                    Span(Modifier.color(Color.rgb(0x7C3AED)).fontSize(0.85.cssRem).fontWeight(FontWeight.SemiBold).toAttrs()) {
+                                                        Text(formatFcfa(sale.totalAmount))
+                                                    }
+                                                    Span(Modifier.fontSize(0.7.cssRem).color(palette.textMuted).toAttrs()) {
+                                                        Text("(Transfert Bar)")
+                                                    }
+                                                }
+                                            } else {
+                                                Span(Modifier.fontWeight(FontWeight.Bold).color(palette.success).toAttrs()) {
+                                                    Text(formatFcfa(sale.totalAmount))
+                                                }
+                                            }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
                                             val isCredit = sale.isDebt || sale.paymentMethod == "À Crédit"
@@ -285,5 +322,9 @@ fun SalesPage() {
         }
     }
 
-    QuickSaleModal(isOpen = showNewSaleModal, onClose = { showNewSaleModal = false })
+    QuickSaleModal(
+        isOpen = showNewSaleModal,
+        initialDestination = saleModalDestination,
+        onClose = { showNewSaleModal = false }
+    )
 }

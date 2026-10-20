@@ -1,6 +1,7 @@
 package org.app.tgvstock.components.widgets
 
 import androidx.compose.runtime.Composable
+import com.varabyte.kobweb.compose.css.CSSLengthOrPercentageNumericValue
 import com.varabyte.kobweb.compose.css.FontWeight
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
@@ -194,7 +195,7 @@ fun AppTextInput(
             .toAttrs {
                 if (placeholderText.isNotBlank()) placeholder(placeholderText)
                 value(value)
-                onInput { onValueChange(it.value) }
+                onInput { onValueChange(it.value.toString()) }
             }
     )
 }
@@ -204,7 +205,7 @@ fun ModalDialog(
     title: String,
     isOpen: Boolean,
     onClose: () -> Unit,
-    maxWidth: CSSNumericValue<out CSSUnit> = 32.cssRem,
+    maxWidth: CSSLengthOrPercentageNumericValue = 32.cssRem,
     content: @Composable () -> Unit
 ) {
     if (!isOpen) return
@@ -262,7 +263,7 @@ fun FormField(
 ) {
     val palette = ColorMode.current.toSitePalette()
     Column(Modifier.fillMaxWidth().gap(0.3.cssRem)) {
-        Label(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
+        Label(attrs = Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
             Text(label)
         }
         content()

@@ -11,6 +11,7 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.*
+import com.varabyte.kobweb.compose.ui.styleModifier
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.Page
 import com.varabyte.kobweb.core.data.add
@@ -18,7 +19,6 @@ import com.varabyte.kobweb.core.init.InitRoute
 import com.varabyte.kobweb.core.init.InitRouteContext
 import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Input
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
@@ -68,7 +68,7 @@ fun DebtsPage() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.gap(0.3.cssRem)) {
-                Span(HeadlineTextStyle.toAttrs()) {
+                Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text("Gestion des Dettes & Créances Clients")
                 }
                 Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
@@ -92,7 +92,7 @@ fun DebtsPage() {
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .gridTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
                 .gap(1.2.cssRem)
                 .toAttrs()
         ) {
@@ -148,20 +148,12 @@ fun DebtsPage() {
 
                 Spacer()
 
-                Input(
-                    type = InputType.Search,
+                AppTextInput(
                     value = searchQuery,
-                    attrs = Modifier
-                        .width(16.cssRem)
-                        .padding(leftRight = 0.8.cssRem, topBottom = 0.4.cssRem)
-                        .borderRadius(8.px)
-                        .border(1.px, LineStyle.Solid, palette.cardBorder)
-                        .backgroundColor(palette.inputBackground)
-                        .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
-                        .toAttrs {
-                            placeholder("Chercher débiteur ou produit...")
-                            onInput { searchQuery = it.value }
-                        }
+                    onValueChange = { searchQuery = it },
+                    placeholderText = "Chercher débiteur ou produit...",
+                    type = "search",
+                    modifier = Modifier.width(16.cssRem)
                 )
             }
         }
@@ -225,7 +217,8 @@ fun DebtsPage() {
                                         }
                                         Td(Modifier.padding(0.75.cssRem).toAttrs()) { Text(debt.productName) }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) {
-                                            Text("${debt.quantityCrates} casiers")
+                                            val qtyStr = if (debt.quantityCrates == debt.quantityCrates.toLong().toDouble()) debt.quantityCrates.toLong().toString() else debt.quantityCrates.toString()
+                                            Text("$qtyStr casiers")
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) {
                                             Text(formatFcfa(debt.unitPrice))
@@ -340,8 +333,9 @@ fun DebtPaymentModal(
                     .borderRadius(8.px)
             ) {
                 Column(Modifier.fillMaxWidth().gap(0.3.cssRem)) {
+                    val initQtyStr = if (debt.quantityCrates == debt.quantityCrates.toLong().toDouble()) debt.quantityCrates.toLong().toString() else debt.quantityCrates.toString()
                     Span(Modifier.fontSize(0.9.cssRem).color(Color.rgb(0x92400E)).toAttrs()) {
-                        Text("Dette initiale : ${formatFcfa(debt.totalAmount)} (${debt.quantityCrates} casiers de ${debt.productName})")
+                        Text("Dette initiale : ${formatFcfa(debt.totalAmount)} ($initQtyStr casiers de ${debt.productName})")
                     }
                     Span(Modifier.fontSize(0.9.cssRem).fontWeight(FontWeight.Bold).color(Color.rgb(0x92400E)).toAttrs()) {
                         Text("Reste à payer actuel : ${formatFcfa(debt.remainingAmount)}")
@@ -350,12 +344,11 @@ fun DebtPaymentModal(
             }
 
             FormField(label = "Montant du Versement / Remboursement (FCFA)") {
-                Input(
-                    type = InputType.Number,
+                AppTextInput(
                     value = paymentAmount,
-                    attrs = Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
-                        onInput { paymentAmount = it.value }
-                    }
+                    onValueChange = { paymentAmount = it },
+                    type = "number",
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
@@ -367,7 +360,7 @@ fun DebtPaymentModal(
                     Text("Solder la totalité")
                 }
                 Spacer()
-                Button(onClick = onClose, Modifier.borderRadius(8.px).padding(leftRight = 1.cssRem, topBottom = 0.5.cssRem)) {
+                Button(onClick = { onClose() }, Modifier.borderRadius(8.px).padding(leftRight = 1.cssRem, topBottom = 0.5.cssRem)) {
                     Text("Annuler")
                 }
                 AppButton(

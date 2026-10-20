@@ -1,7 +1,6 @@
 package org.app.tgvstock.components.sections
 
 import androidx.compose.runtime.*
-import com.varabyte.kobweb.browser.dom.ElementTarget
 import com.varabyte.kobweb.compose.css.FontWeight
 import com.varabyte.kobweb.compose.css.functions.clamp
 import com.varabyte.kobweb.compose.foundation.layout.Box
@@ -13,6 +12,7 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.*
+import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.rememberPageContext
 import com.varabyte.kobweb.silk.components.icons.CloseIcon
 import com.varabyte.kobweb.silk.components.icons.HamburgerIcon
@@ -24,8 +24,6 @@ import com.varabyte.kobweb.silk.components.navigation.UncoloredLinkVariant
 import com.varabyte.kobweb.silk.components.navigation.UndecoratedLinkVariant
 import com.varabyte.kobweb.silk.components.overlay.Overlay
 import com.varabyte.kobweb.silk.components.overlay.OverlayVars
-import com.varabyte.kobweb.silk.components.overlay.PopupPlacement
-import com.varabyte.kobweb.silk.components.overlay.Tooltip
 import com.varabyte.kobweb.silk.style.CssStyle
 import com.varabyte.kobweb.silk.style.animation.Keyframes
 import com.varabyte.kobweb.silk.style.animation.toAnimation
@@ -38,7 +36,11 @@ import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
+import org.app.tgvstock.AppLanguage
+import org.app.tgvstock.LocalLanguage
+import org.app.tgvstock.appLanguage
 import org.app.tgvstock.components.widgets.IconButton
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 val NavHeaderStyle = CssStyle.base {
@@ -51,19 +53,19 @@ val NavHeaderStyle = CssStyle.base {
         .boxShadow(0.px, 2.px, 12.px, 0.px, rgba(0, 0, 0, 0.05))
 }
 
-data class NavItem(val path: String, val label: String, val icon: @Composable () -> Unit)
+data class NavItem(val path: String, val labelKey: (org.app.tgvstock.Strings) -> String, val icon: @Composable () -> Unit)
 
 val navItems = listOf(
-    NavItem("/", "Dashboard", { FaChartLine(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/sales", "Ventes", { FaCashRegister(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/entries", "Arrivages", { FaTruckLoading(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/packaging", "Emballages", { FaBoxesStacked(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/spoiled", "Avaries", { FaWineGlass(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/debts", "Dettes", { FaHandHoldingDollar(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/expenses", "Dépenses", { FaReceipt(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/inventory", "Inventaire", { FaClipboardList(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/reports", "Rapports PDF", { FaFilePdf(Modifier.margin(right = 0.4.cssRem)) }),
-    NavItem("/products", "Produits", { FaBeerMugEmpty(Modifier.margin(right = 0.4.cssRem)) })
+    NavItem("/", { it.navDashboard }, { FaChartLine(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/sales", { it.navSales }, { FaCashRegister(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/entries", { it.navEntries }, { FaTruck(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/packaging", { it.navPackaging }, { FaBoxesStacked(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/spoiled", { it.navSpoiled }, { FaWineGlass(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/debts", { it.navDebts }, { FaHandHoldingDollar(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/expenses", { it.navExpenses }, { FaReceipt(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/inventory", { it.navInventory }, { FaClipboardList(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/reports", { it.navReports }, { FaFilePdf(Modifier.margin(right = 0.4.cssRem)) }),
+    NavItem("/products", { it.navProducts }, { FaBeerMugEmpty(Modifier.margin(right = 0.4.cssRem)) })
 )
 
 @Composable
@@ -71,6 +73,7 @@ private fun NavLinkItem(item: NavItem, isMobile: Boolean = false) {
     val ctx = rememberPageContext()
     val isCurrent = ctx.route.path == item.path
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
     Link(
         item.path,
@@ -82,11 +85,11 @@ private fun NavLinkItem(item: NavItem, isMobile: Boolean = false) {
             .fontSize(if (isMobile) 1.05.cssRem else 0.9.cssRem)
             .backgroundColor(if (isCurrent) palette.brand.primary.toRgb().copyf(alpha = 0.15f) else Colors.Transparent)
             .color(if (isCurrent) palette.brand.primary else if (ColorMode.current.isDark) Color.rgb(0xCBD5E1) else Color.rgb(0x334155))
-            .transition(com.varabyte.kobweb.compose.css.CSSTransition("all", 150.ms))
+            .transition(com.varabyte.kobweb.compose.css.Transition.of("all", 150.ms))
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             item.icon()
-            Text(item.label)
+            Text(item.labelKey(strings))
         }
     }
 }
@@ -97,7 +100,33 @@ private fun ColorModeButton() {
     IconButton(onClick = { colorMode = colorMode.opposite }) {
         if (colorMode.isLight) MoonIcon() else SunIcon()
     }
-    Tooltip(ElementTarget.PreviousSibling, "Changer de thème", placement = PopupPlacement.BottomRight)
+}
+
+@Composable
+private fun LanguageToggleButton() {
+    var language by appLanguage
+    val current = LocalLanguage.current
+    val next = if (current == AppLanguage.FRENCH) AppLanguage.ENGLISH else AppLanguage.FRENCH
+    val palette = ColorMode.current.toSitePalette()
+
+    Box(
+        modifier = Modifier
+            .padding(leftRight = 0.5.cssRem, topBottom = 0.3.cssRem)
+            .borderRadius(20.px)
+            .border(1.px, LineStyle.Solid, palette.cardBorder)
+            .backgroundColor(palette.nearBackground)
+            .cursor(com.varabyte.kobweb.compose.css.Cursor.Pointer)
+            .fontSize(0.82.cssRem)
+            .fontWeight(FontWeight.SemiBold)
+            .transition(com.varabyte.kobweb.compose.css.Transition.of("all", 150.ms))
+            .onClick { language = next },
+        contentAlignment = Alignment.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {
+            Span(Modifier.fontSize(1.0.cssRem).toAttrs()) { Text(next.flag) }
+            Span(Modifier.toAttrs()) { Text(next.label) }
+        }
+    }
 }
 
 @Composable
@@ -131,6 +160,7 @@ enum class SideMenuState {
 @Composable
 fun NavHeader() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
     Row(
         NavHeaderStyle.toModifier(),
@@ -152,34 +182,15 @@ fun NavHeader() {
                 }
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {
-                        Span({
-                            style {
-                                fontWeight("800")
-                                fontSize(1.2.cssRem)
-                                color(if (ColorMode.current.isDark) "white" else "#0f172a")
-                                letterSpacing("0.5px")
-                            }
-                        }) {
+                        Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.2.cssRem).color(if (ColorMode.current.isDark) Colors.White else Color.rgb(0x0f172a)).letterSpacing(0.5.px).toAttrs()) {
                             Text("TGV")
                         }
-                        Span({
-                            style {
-                                fontWeight("800")
-                                fontSize(1.2.cssRem)
-                                color(palette.brand.primary.toString())
-                            }
-                        }) {
+                        Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.2.cssRem).color(palette.brand.primary).letterSpacing(0.5.px).toAttrs()) {
                             Text("STOCK")
                         }
                     }
-                    Span({
-                        style {
-                            fontSize(0.7.cssRem)
-                            color(palette.textMuted.toString())
-                            letterSpacing("0.4px")
-                        }
-                    }) {
-                        Text("Gestion de Dépôt")
+                    Span(Modifier.fontSize(0.7.cssRem).color(palette.textMuted).letterSpacing(0.4.px).toAttrs()) {
+                        Text(strings.navSubtitle)
                     }
                 }
             }
@@ -195,6 +206,7 @@ fun NavHeader() {
             navItems.forEach { item ->
                 NavLinkItem(item)
             }
+            LanguageToggleButton()
             ColorModeButton()
         }
 
@@ -205,6 +217,7 @@ fun NavHeader() {
         ) {
             var menuState by remember { mutableStateOf(SideMenuState.CLOSED) }
 
+            LanguageToggleButton()
             ColorModeButton()
             HamburgerButton(onClick = { menuState = SideMenuState.OPEN })
 
@@ -222,6 +235,7 @@ fun NavHeader() {
 @Composable
 private fun SideMenu(menuState: SideMenuState, close: () -> Unit, onAnimationEnd: () -> Unit) {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
     Overlay(
         Modifier
@@ -255,14 +269,8 @@ private fun SideMenu(menuState: SideMenuState, close: () -> Unit, onAnimationEnd
                     Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Span({
-                        style {
-                            fontWeight("bold")
-                            fontSize(1.1.cssRem)
-                            color(palette.brand.primary.toString())
-                        }
-                    }) {
-                        Text("Menu TGV Stock")
+                    Span(Modifier.fontWeight(FontWeight.Bold).fontSize(1.1.cssRem).color(palette.brand.primary).toAttrs()) {
+                        Text(strings.navMenuTitle)
                     }
                     Spacer()
                     CloseButton(onClick = { close() })
