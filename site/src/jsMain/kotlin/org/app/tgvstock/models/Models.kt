@@ -11,14 +11,14 @@ data class Product(
 )
 
 /**
- * All beers, alcopops, and Guinness may arrive in half-crates and may also be sold in half-crates.
- * Canettes (cans / cartons) do not support crates or half-crates.
+ * All beers, alcopops, Guinness, canettes (cans / cartons), and non-alcoholic products
+ * may arrive in half-crates/half-cartons and may also be sold in half-crates/half-cartons.
  */
 fun Product.supportsHalfCrate(): Boolean {
     val cat = category.trim().lowercase()
     val n = name.trim().lowercase()
-    if (cat.contains("canette") || n.contains("canette") || n.contains("cannette")) return false
-    return cat in setOf("bières", "bieres", "alcopops", "guinness") || n.contains("guinness")
+    return cat in setOf("bières", "bieres", "alcopops", "guinness", "canettes", "non-alcoolisé", "non-alcoolise") ||
+        n.contains("guinness") || n.contains("canette") || n.contains("cannette")
 }
 
 data class Packaging(

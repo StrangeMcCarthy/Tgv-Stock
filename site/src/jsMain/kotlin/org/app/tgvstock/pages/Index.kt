@@ -512,7 +512,7 @@ fun QuickSaleModal(
     var paymentMethod by remember { mutableStateOf(if (initialDestination == "Bar") "Transfert Interne" else "Esp\u00e8ces") }
 
     val prod = StockRepository.products.find { it.id == selectedProductId }
-    // All beers, alcopops, and Guinness support half-crates
+    // All beers, alcopops, Guinness, canettes, and non-alcoholic products support half-crates
     val supportsHalfCrate = prod?.supportsHalfCrate() == true
     val qtyDouble = quantity.toDoubleOrNull() ?: 1.0
     val pu = prod?.unitPrice ?: 0.0
@@ -722,7 +722,7 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
     var notes by remember { mutableStateOf("") }
 
     val prod = StockRepository.products.find { it.id == selectedProductId }
-    // All beers, alcopops, and Guinness support half-crates (0.5)
+    // All beers, alcopops, Guinness, canettes, and non-alcoholic products support half-crates (0.5)
     val supportsHalfCrate = prod?.supportsHalfCrate() == true
     val qtyDouble = quantity.toDoubleOrNull() ?: 0.0
 
