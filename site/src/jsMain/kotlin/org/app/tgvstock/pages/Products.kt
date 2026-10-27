@@ -29,6 +29,7 @@ import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
 import org.app.tgvstock.models.Product
+import org.app.tgvstock.models.supportsHalfCrate
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
@@ -151,13 +152,14 @@ fun ProductsPage() {
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("PRIX UNITAIRE (PU)") }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("STOCK INITIAL") }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("CONSIGNATION CASIER") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("DEMI-CASIER") }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTIONS") }
                             }
                         }
                         Tbody {
                             if (filteredProducts.isEmpty()) {
                                 Tr {
-                                    Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "7") }) {
+                                    Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "8") }) {
                                         Text("Aucun produit trouvé.")
                                     }
                                 }
@@ -204,6 +206,34 @@ fun ProductsPage() {
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).color(palette.textMuted).toAttrs()) {
                                             Text(formatFcfa(p.consignationPrice))
+                                        }
+                                        Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
+                                            if (p.supportsHalfCrate()) {
+                                                Box(
+                                                    Modifier
+                                                        .backgroundColor(Color.rgb(0xDCFCE7))
+                                                        .color(Color.rgb(0x166534))
+                                                        .borderRadius(10.px)
+                                                        .padding(leftRight = 0.5.cssRem, topBottom = 0.15.cssRem)
+                                                        .fontSize(0.78.cssRem)
+                                                        .fontWeight(FontWeight.Bold)
+                                                        .display(DisplayStyle.InlineBlock)
+                                                ) {
+                                                    Text("\u2713 Oui")
+                                                }
+                                            } else {
+                                                Box(
+                                                    Modifier
+                                                        .backgroundColor(palette.nearBackground)
+                                                        .color(palette.textMuted)
+                                                        .borderRadius(10.px)
+                                                        .padding(leftRight = 0.5.cssRem, topBottom = 0.15.cssRem)
+                                                        .fontSize(0.78.cssRem)
+                                                        .display(DisplayStyle.InlineBlock)
+                                                ) {
+                                                    Text("Non")
+                                                }
+                                            }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
                                             Row(
@@ -309,6 +339,12 @@ fun ProductFormModal(
     var stockInitial by remember { mutableStateOf(initialProduct?.stockInitial?.toString() ?: "20") }
     var consignationPrice by remember { mutableStateOf(initialProduct?.consignationPrice?.toString() ?: "3000") }
 
+    // Check if current category supports half-crate
+    val tempProduct = Product("temp", name, unitPrice.toDoubleOrNull() ?: 0.0, bottlesPerCrate.toIntOrNull() ?: 12, category)
+    val categorySupportsHalfCrate = tempProduct.supportsHalfCrate()
+
+    val palette = ColorMode.current.toSitePalette()
+
     ModalDialog(title = title, isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
             FormField(label = "Nom du Produit") {
@@ -358,13 +394,60 @@ fun ProductFormModal(
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem)) {
                 Box(Modifier.weight(1f)) {
-                    FormField(label = "Stock Initial (Casiers)") {
-                        AppTextInput(
-                            value = stockInitial,
-                            onValueChange = { stockInitial = it },
-                            type = "number",
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    FormField(label = if (categorySupportsHalfCrate) "Stock Initial (Casiers) — demi-casier autorisé : 0.5, 1.5..." else "Stock Initial (Casiers)") {
+                        Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
+                            org.jetbrains.compose.web.dom.Input(
+                                type = org.jetbrains.compose.web.attributes.InputType.Number,
+                                attrs = Modifier.fillMaxWidth()
+                                    .padding(leftRight = 0.75.cssRem, topBottom = 0.45.cssRem)
+                                    .borderRadius(8.px)
+                                    .border(1.px, LineStyle.Solid, palette.cardBorder)
+                                    .backgroundColor(palette.inputBackground)
+                                    .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                    .toAttrs {
+                                        value(stockInitial)
+                                        attr("step", if (categorySupportsHalfCrate) "0.5" else "1")
+                                        attr("min", "0")
+                                        onInput { stockInitial = it.value?.toString() ?: "0" }
+                                    }
+                            )
+                            if (categorySupportsHalfCrate) {
+                                Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                                    Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
+                                        Text("Demi-casier :")
+                                    }
+                                    listOf("0.5", "1", "1.5", "2", "3", "5", "10").forEach { preset ->
+                                        Button(
+                                            onClick = { stockInitial = preset },
+                                            Modifier
+                                                .fontSize(0.72.cssRem)
+                                                .padding(leftRight = 0.45.cssRem, topBottom = 0.15.cssRem)
+                                                .borderRadius(12.px)
+                                                .backgroundColor(if (stockInitial == preset) palette.brand.primary else palette.nearBackground)
+                                                .color(if (stockInitial == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                                .border(1.px, LineStyle.Solid, palette.cardBorder)
+                                        ) {
+                                            Text("$preset cas.")
+                                        }
+                                    }
+                                    Button(
+                                        onClick = {
+                                            val cur = stockInitial.toDoubleOrNull() ?: 0.0
+                                            stockInitial = (cur + 0.5).toString()
+                                        },
+                                        Modifier
+                                            .fontSize(0.72.cssRem)
+                                            .padding(leftRight = 0.45.cssRem, topBottom = 0.15.cssRem)
+                                            .borderRadius(12.px)
+                                            .backgroundColor(palette.nearBackground)
+                                            .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                            .border(1.px, LineStyle.Solid, palette.cardBorder)
+                                    ) {
+                                        Text("+0.5")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 Box(Modifier.weight(1f)) {
