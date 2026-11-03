@@ -22,13 +22,16 @@ import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.forms.Input
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -54,28 +57,25 @@ fun SpoiledPage() {
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
         // Header
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text("Gestion des Produits Gâtés & Avaries")
                 }
-                Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                     Text("Déclarez les bouteilles cassées, altérées ou défectueuses, déduites automatiquement du stock.")
                 }
             }
 
-            Spacer()
-
-            AppButton(
-                text = "Déclarer une Avarie",
-                onClick = { showNewSpoiledModal = true },
-                icon = { FaWineGlass() },
-                backgroundColor = palette.danger,
-                textColor = Colors.White
-            )
+            Div(HeaderActionsStyle.toAttrs()) {
+                AppButton(
+                    text = "Déclarer une Avarie",
+                    onClick = { showNewSpoiledModal = true },
+                    icon = { FaWineGlass() },
+                    backgroundColor = palette.danger,
+                    textColor = Colors.White
+                )
+            }
         }
 
         // Summary KPI cards
@@ -83,8 +83,8 @@ fun SpoiledPage() {
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
-                .gap(1.2.cssRem)
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(150px, 1fr))") }
+                .gap(0.85.cssRem)
                 .toAttrs()
         ) {
             StatCard(
@@ -115,12 +115,7 @@ fun SpoiledPage() {
         // Table of spoiled products
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-                Div(
-                    Modifier
-                        .fillMaxWidth()
-                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                        .toAttrs()
-                ) {
+                ResponsiveTableContainer(minWidth = 720.px) {
                     Table(
                         Modifier
                             .fillMaxWidth()

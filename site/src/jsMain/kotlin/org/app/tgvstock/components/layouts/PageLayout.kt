@@ -29,7 +29,7 @@ val PageContentStyle = CssStyle {
     base {
         Modifier
             .fillMaxWidth()
-            .padding(leftRight = 1.cssRem, top = 1.5.cssRem, bottom = 3.cssRem)
+            .padding(leftRight = 0.75.cssRem, top = 1.cssRem, bottom = 2.5.cssRem)
     }
     Breakpoint.MD {
         Modifier

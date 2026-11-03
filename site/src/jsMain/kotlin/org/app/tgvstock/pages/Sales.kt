@@ -21,11 +21,16 @@ import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
+import org.app.tgvstock.FilterBarStyle
+import org.app.tgvstock.FilterControlsGroupStyle
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -66,20 +71,17 @@ fun SalesPage() {
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
         // Header
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text("Registre des Ventes")
                 }
-                Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                     Text("Enregistrement de toutes les sorties du dépôt (Dépôt direct, Bar, Grossistes, Crédits).")
                 }
             }
 
-            Row(Modifier.gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
+            Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
                     text = "Transfert Bar",
                     onClick = {
@@ -108,8 +110,8 @@ fun SalesPage() {
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
-                .gap(1.2.cssRem)
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(150px, 1fr))") }
+                .gap(0.85.cssRem)
                 .toAttrs()
         ) {
             StatCard(
@@ -147,48 +149,45 @@ fun SalesPage() {
 
         // Filters Bar
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
-            Row(
-                Modifier.fillMaxWidth().gap(1.cssRem),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Filter date
-                Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
-                    Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                        Text("Date :")
+            Div(FilterBarStyle.toAttrs()) {
+                Div(FilterControlsGroupStyle.toAttrs()) {
+                    // Filter date
+                    Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                        Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
+                            Text("Date :")
+                        }
+                        AppTextInput(
+                            value = filterDate,
+                            onValueChange = { filterDate = it },
+                            type = "date"
+                        )
+                        if (filterDate.isNotBlank()) {
+                            Button(
+                                onClick = { filterDate = "" },
+                                Modifier.fontSize(0.75.cssRem).padding(leftRight = 0.5.cssRem, topBottom = 0.3.cssRem)
+                            ) {
+                                Text("Toutes les dates")
+                            }
+                        }
                     }
-                    AppTextInput(
-                        value = filterDate,
-                        onValueChange = { filterDate = it },
-                        type = "date"
-                    )
-                    if (filterDate.isNotBlank()) {
-                        Button(
-                            onClick = { filterDate = "" },
-                            Modifier.fontSize(0.75.cssRem).padding(leftRight = 0.5.cssRem, topBottom = 0.3.cssRem)
+
+                    // Destination filter
+                    Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                        Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
+                            Text("Destination :")
+                        }
+                        Select(
+                            Modifier.padding(0.4.cssRem).borderRadius(6.px).toAttrs {
+                                onChange { filterDestination = it.value ?: "Tous" }
+                            }
                         ) {
-                            Text("Toutes les dates")
+                            Option("Tous") { Text("Toutes destinations") }
+                            Option("Dépôt") { Text("Dépôt") }
+                            Option("Bar") { Text("Bar") }
+                            Option("Client Gros") { Text("Client Gros") }
                         }
                     }
                 }
-
-                // Destination filter
-                Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
-                    Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                        Text("Destination :")
-                    }
-                    Select(
-                        Modifier.padding(0.4.cssRem).borderRadius(6.px).toAttrs {
-                            onChange { filterDestination = it.value ?: "Tous" }
-                        }
-                    ) {
-                        Option("Tous") { Text("Toutes destinations") }
-                        Option("Dépôt") { Text("Dépôt") }
-                        Option("Bar") { Text("Bar") }
-                        Option("Client Gros") { Text("Client Gros") }
-                    }
-                }
-
-                Spacer()
 
                 // Search
                 AppTextInput(
@@ -196,7 +195,7 @@ fun SalesPage() {
                     onValueChange = { searchQuery = it },
                     placeholderText = "Chercher produit ou client...",
                     type = "search",
-                    modifier = Modifier.width(16.cssRem)
+                    modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
             }
         }
@@ -204,12 +203,7 @@ fun SalesPage() {
         // Sales Table
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-                Div(
-                    Modifier
-                        .fillMaxWidth()
-                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                        .toAttrs()
-                ) {
+                ResponsiveTableContainer(minWidth = 850.px) {
                     Table(
                         Modifier
                             .fillMaxWidth()

@@ -20,6 +20,9 @@ import com.varabyte.kobweb.silk.components.overlay.Overlay
 import com.varabyte.kobweb.silk.components.overlay.OverlayVars
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
+import com.varabyte.kobweb.compose.ui.styleModifier
+import com.varabyte.kobweb.silk.style.CssStyle
+import com.varabyte.kobweb.silk.style.breakpoint.Breakpoint
 import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.*
@@ -64,25 +67,26 @@ fun StatCard(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.gap(0.3.cssRem)) {
-                Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
+            Column(Modifier.gap(0.25.cssRem).weight(1)) {
+                Span(Modifier.fontSize(0.8.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
                     Text(title)
                 }
-                Span(Modifier.fontSize(1.4.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
+                Span(Modifier.fontSize(1.25.cssRem).fontWeight(FontWeight.Bold).lineHeight(1.2).toAttrs()) {
                     Text(value)
                 }
-                Span(Modifier.fontSize(0.75.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.72.cssRem).color(palette.textMuted).toAttrs()) {
                     Text(subtitle)
                 }
             }
             Spacer()
             Box(
                 Modifier
-                    .size(3.cssRem)
+                    .size(2.6.cssRem)
+                    .flexShrink(0)
                     .borderRadius(12.px)
                     .backgroundColor(accentColor.toRgb().copyf(alpha = 0.15f))
                     .color(accentColor)
-                    .fontSize(1.4.cssRem),
+                    .fontSize(1.25.cssRem),
                 contentAlignment = Alignment.Center
             ) {
                 icon()
@@ -200,6 +204,21 @@ fun AppTextInput(
     )
 }
 
+val ModalBoxStyle = CssStyle {
+    base {
+        Modifier
+            .maxWidth(94.percent)
+            .padding(1.cssRem)
+            .borderRadius(14.px)
+    }
+    Breakpoint.MD {
+        Modifier
+            .maxWidth(90.percent)
+            .padding(1.5.cssRem)
+            .borderRadius(16.px)
+    }
+}
+
 @Composable
 fun ModalDialog(
     title: String,
@@ -218,15 +237,12 @@ fun ModalDialog(
             .onClick { onClose() }
     ) {
         Box(
-            Modifier
+            ModalBoxStyle.toModifier()
                 .width(maxWidth)
-                .maxWidth(90.percent)
-                .maxHeight(85.vh)
+                .maxHeight(88.vh)
                 .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
                 .backgroundColor(palette.cardBackground)
                 .border(1.px, LineStyle.Solid, palette.cardBorder)
-                .borderRadius(16.px)
-                .padding(1.5.cssRem)
                 .boxShadow(0.px, 12.px, 35.px, 0.px, rgba(0, 0, 0, 0.4))
                 .align(Alignment.Center)
                 .onClick { it.stopPropagation() }
@@ -252,6 +268,28 @@ fun ModalDialog(
                 }
                 content()
             }
+        }
+    }
+}
+
+@Composable
+fun ResponsiveTableContainer(
+    minWidth: CSSLengthOrPercentageNumericValue = 720.px,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Div(
+        Modifier
+            .fillMaxWidth()
+            .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
+            .styleModifier {
+                property("-webkit-overflow-scrolling", "touch")
+            }
+            .then(modifier)
+            .toAttrs()
+    ) {
+        Box(Modifier.fillMaxWidth().minWidth(minWidth)) {
+            content()
         }
     }
 }

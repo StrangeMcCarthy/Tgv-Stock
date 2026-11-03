@@ -21,12 +21,17 @@ import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
+import com.varabyte.kobweb.compose.ui.styleModifier
 import kotlinx.browser.window
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
+import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -63,22 +68,17 @@ fun ReportsPage() {
         // Controls bar (hidden during print)
         Box(GlassCardStyle.toModifier().fillMaxWidth().classNames("no-print")) {
             Column(Modifier.fillMaxWidth().gap(1.2.cssRem)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Div(PageHeaderStyle.toAttrs()) {
                     Column(Modifier.gap(0.2.cssRem)) {
                         Span(HeadlineTextStyle.toModifier().toAttrs()) {
                             Text("Générateur de Rapports d'Inventaire")
                         }
-                        Span(Modifier.fontSize(0.9.cssRem).color(palette.textMuted).toAttrs()) {
+                        Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                             Text("Générez des rapports journaliers, hebdomadaires ou annuels conformes à la fiche du dépôt et exportez-les au format PDF.")
                         }
                     }
 
-                    Spacer()
-
-                    Row(Modifier.gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                    Div(HeaderActionsStyle.toAttrs()) {
                         AppButton(
                             text = "Exporter / Imprimer en PDF",
                             onClick = {
@@ -91,12 +91,18 @@ fun ReportsPage() {
                     }
                 }
 
-                Row(
-                    Modifier.fillMaxWidth().gap(1.5.cssRem),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Div(FilterBarStyle.toAttrs()) {
                     // Period Selector
-                    Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        Modifier
+                            .gap(0.4.cssRem)
+                            .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
+                            .styleModifier {
+                                property("-webkit-overflow-scrolling", "touch")
+                                property("white-space", "nowrap")
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.textMuted).toAttrs()) {
                             Text("Période :")
                         }
@@ -117,29 +123,31 @@ fun ReportsPage() {
                         }
                     }
 
-                    if (selectedPeriod == "Journalier") {
+                    Row(Modifier.gap(0.75.cssRem).flexWrap(FlexWrap.Wrap), verticalAlignment = Alignment.CenterVertically) {
+                        if (selectedPeriod == "Journalier") {
+                            Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                                Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.textMuted).toAttrs()) {
+                                    Text("Date :")
+                                }
+                                AppTextInput(
+                                    value = selectedDate,
+                                    onValueChange = { selectedDate = it },
+                                    type = "date"
+                                )
+                            }
+                        }
+
                         Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                             Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.textMuted).toAttrs()) {
-                                Text("Date :")
+                                Text("Nom Vendeur :")
                             }
                             AppTextInput(
-                                value = selectedDate,
-                                onValueChange = { selectedDate = it },
-                                type = "date"
+                                value = sellerName,
+                                onValueChange = { sellerName = it },
+                                type = "text",
+                                modifier = Modifier.width(9.cssRem)
                             )
                         }
-                    }
-
-                    Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
-                        Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.textMuted).toAttrs()) {
-                            Text("Nom Vendeur :")
-                        }
-                        AppTextInput(
-                            value = sellerName,
-                            onValueChange = { sellerName = it },
-                            type = "text",
-                            modifier = Modifier.width(12.cssRem)
-                        )
                     }
                 }
             }
@@ -183,52 +191,54 @@ fun ReportsPage() {
                 }
 
                 // Section 1: Financial Reconciliation (Sheet 1 reproduction)
-                Row(Modifier.fillMaxWidth().gap(2.cssRem)) {
-                    Box(Modifier.width(55.percent)) {
-                        Table(
-                            Modifier
-                                .fillMaxWidth()
-                                .borderCollapse(com.varabyte.kobweb.compose.css.BorderCollapse.Collapse)
-                                .fontSize(0.82.cssRem)
-                                .classNames("print-table")
-                                .toAttrs()
-                        ) {
-                            Thead {
-                                Tr(Modifier.backgroundColor(Color.rgb(0xF3F4F6)).toAttrs()) {
-                                    Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Start).toAttrs()) { Text("RUBRIQUE INVENTAIRE") }
-                                    Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text("MONTANT (FCFA)") }
+                Div(Modifier.fillMaxWidth().display(DisplayStyle.Flex).flexWrap(FlexWrap.Wrap).gap(1.5.cssRem).toAttrs()) {
+                    Box(Modifier.fillMaxWidth().maxWidth(34.cssRem).styleModifier { property("flex", "1 1 300px") }) {
+                        ResponsiveTableContainer(minWidth = 320.px) {
+                            Table(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .borderCollapse(com.varabyte.kobweb.compose.css.BorderCollapse.Collapse)
+                                    .fontSize(0.82.cssRem)
+                                    .classNames("print-table")
+                                    .toAttrs()
+                            ) {
+                                Thead {
+                                    Tr(Modifier.backgroundColor(Color.rgb(0xF3F4F6)).toAttrs()) {
+                                        Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Start).toAttrs()) { Text("RUBRIQUE INVENTAIRE") }
+                                        Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text("MONTANT (FCFA)") }
+                                    }
                                 }
-                            }
-                            Tbody {
-                                Tr {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.Bold).toAttrs()) { Text("TOTAL VENTES") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.Bold).toAttrs()) { Text(formatFcfa(totalVentes)) }
-                                }
-                                Tr {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("TOTAL VERSEMENT") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalVersements)) }
-                                }
-                                Tr {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("AVARIS (PERTE CASSE)") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalAvaries)) }
-                                }
-                                Tr {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("DÉPENSES DU DÉPÔT") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalDepenses)) }
-                                }
-                                Tr {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("DETTES / CRÉANCES") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalDettes)) }
-                                }
-                                Tr(Modifier.backgroundColor(Color.rgb(0xFEF3C7)).toAttrs()) {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.ExtraBold).toAttrs()) { Text("DIFFÉRENCE / ÉCART") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.ExtraBold).toAttrs()) { Text(formatFcfa(difference)) }
+                                Tbody {
+                                    Tr {
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.Bold).toAttrs()) { Text("TOTAL VENTES") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.Bold).toAttrs()) { Text(formatFcfa(totalVentes)) }
+                                    }
+                                    Tr {
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("TOTAL VERSEMENT") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalVersements)) }
+                                    }
+                                    Tr {
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("AVARIS (PERTE CASSE)") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalAvaries)) }
+                                    }
+                                    Tr {
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("DÉPENSES DU DÉPÔT") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalDepenses)) }
+                                    }
+                                    Tr {
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("DETTES / CRÉANCES") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalDettes)) }
+                                    }
+                                    Tr(Modifier.backgroundColor(Color.rgb(0xFEF3C7)).toAttrs()) {
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.ExtraBold).toAttrs()) { Text("DIFFÉRENCE / ÉCART") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.ExtraBold).toAttrs()) { Text(formatFcfa(difference)) }
+                                    }
                                 }
                             }
                         }
                     }
 
-                    Box(Modifier.width(45.percent)) {
+                    Box(Modifier.fillMaxWidth().maxWidth(34.cssRem).styleModifier { property("flex", "1 1 280px") }) {
                         Column(
                             Modifier
                                 .fillMaxSize()
@@ -265,12 +275,7 @@ fun ReportsPage() {
                         Text("DÉTAIL DES SORTIES DE STOCK ET DES VENTES")
                     }
 
-                    Div(
-                        Modifier
-                            .fillMaxWidth()
-                            .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                            .toAttrs()
-                    ) {
+                    ResponsiveTableContainer(minWidth = 850.px) {
                         Table(
                             Modifier
                                 .fillMaxWidth()

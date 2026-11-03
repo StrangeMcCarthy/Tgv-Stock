@@ -20,11 +20,16 @@ import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
+import com.varabyte.kobweb.compose.ui.styleModifier
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
+import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -62,37 +67,40 @@ fun ProductsPage() {
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
         // Header
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text("Catalogue & CRUD Produits")
                 }
-                Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                     Text("${products.size} produits référencés dans le dépôt. Ajoutez, modifiez ou ajustez les prix unitaires.")
                 }
             }
 
-            Spacer()
-
-            AppButton(
-                text = "Ajouter un Produit",
-                onClick = { showAddModal = true },
-                icon = { FaPlus() },
-                backgroundColor = palette.brand.primary
-            )
+            Div(HeaderActionsStyle.toAttrs()) {
+                AppButton(
+                    text = "Ajouter un Produit",
+                    onClick = { showAddModal = true },
+                    icon = { FaPlus() },
+                    backgroundColor = palette.brand.primary
+                )
+            }
         }
 
         // Filters Bar
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
-            Row(
-                Modifier.fillMaxWidth().gap(1.cssRem),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Category buttons
-                Row(Modifier.gap(0.5.cssRem).overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)) {
+            Div(FilterBarStyle.toAttrs()) {
+                // Category buttons (horizontal touch scroll on mobile)
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .gap(0.5.cssRem)
+                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
+                        .styleModifier {
+                            property("-webkit-overflow-scrolling", "touch")
+                            property("white-space", "nowrap")
+                        }
+                ) {
                     categories.forEach { cat ->
                         val isSelected = selectedCategory == cat
                         Button(
@@ -110,15 +118,13 @@ fun ProductsPage() {
                     }
                 }
 
-                Spacer()
-
                 // Search input
                 AppTextInput(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholderText = "Rechercher un produit...",
                     type = "search",
-                    modifier = Modifier.width(16.cssRem)
+                    modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
             }
         }
@@ -126,12 +132,7 @@ fun ProductsPage() {
         // Products Table
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-                Div(
-                    Modifier
-                        .fillMaxWidth()
-                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                        .toAttrs()
-                ) {
+                ResponsiveTableContainer(minWidth = 850.px) {
                     Table(
                         Modifier
                             .fillMaxWidth()
@@ -412,7 +413,7 @@ fun ProductFormModal(
                                     }
                             )
                             if (categorySupportsHalfCrate) {
-                                Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                                Row(Modifier.fillMaxWidth().gap(0.35.cssRem).flexWrap(FlexWrap.Wrap), verticalAlignment = Alignment.CenterVertically) {
                                     Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
                                         Text("Demi-casier :")
                                     }

@@ -43,14 +43,19 @@ import org.app.tgvstock.components.widgets.IconButton
 import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
-val NavHeaderStyle = CssStyle.base {
-    val palette = colorMode.toSitePalette()
-    Modifier
-        .fillMaxWidth()
-        .padding(leftRight = 1.5.cssRem, topBottom = 0.8.cssRem)
-        .backgroundColor(palette.cardBackground)
-        .borderBottom(1.px, LineStyle.Solid, palette.cardBorder)
-        .boxShadow(0.px, 2.px, 12.px, 0.px, rgba(0, 0, 0, 0.05))
+val NavHeaderStyle = CssStyle {
+    base {
+        val palette = colorMode.toSitePalette()
+        Modifier
+            .fillMaxWidth()
+            .padding(leftRight = 0.85.cssRem, topBottom = 0.65.cssRem)
+            .backgroundColor(palette.cardBackground)
+            .borderBottom(1.px, LineStyle.Solid, palette.cardBorder)
+            .boxShadow(0.px, 2.px, 12.px, 0.px, rgba(0, 0, 0, 0.05))
+    }
+    Breakpoint.MD {
+        Modifier.padding(leftRight = 1.5.cssRem, topBottom = 0.8.cssRem)
+    }
 }
 
 data class NavItem(val path: String, val labelKey: (org.app.tgvstock.Strings) -> String, val icon: @Composable () -> Unit)
@@ -124,7 +129,7 @@ private fun LanguageToggleButton() {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {
             Span(Modifier.fontSize(1.0.cssRem).toAttrs()) { Text(next.flag) }
-            Span(Modifier.toAttrs()) { Text(next.label) }
+            Span(Modifier.displayIfAtLeast(Breakpoint.SM).toAttrs()) { Text(next.label) }
         }
     }
 }
@@ -189,7 +194,7 @@ fun NavHeader() {
                             Text("STOCK")
                         }
                     }
-                    Span(Modifier.fontSize(0.7.cssRem).color(palette.textMuted).letterSpacing(0.4.px).toAttrs()) {
+                    Span(Modifier.displayIfAtLeast(Breakpoint.SM).fontSize(0.7.cssRem).color(palette.textMuted).letterSpacing(0.4.px).toAttrs()) {
                         Text(strings.navSubtitle)
                     }
                 }
@@ -212,7 +217,7 @@ fun NavHeader() {
 
         // Mobile / Tablet Navigation Button
         Row(
-            Modifier.gap(0.75.cssRem).displayUntil(Breakpoint.LG),
+            Modifier.gap(0.5.cssRem).displayUntil(Breakpoint.LG),
             verticalAlignment = Alignment.CenterVertically
         ) {
             var menuState by remember { mutableStateOf(SideMenuState.CLOSED) }
@@ -250,6 +255,7 @@ private fun SideMenu(menuState: SideMenuState, close: () -> Unit, onAnimationEnd
                     .align(Alignment.CenterEnd)
                     .padding(1.5.cssRem)
                     .gap(1.2.cssRem)
+                    .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
                     .backgroundColor(palette.cardBackground)
                     .borderLeft(1.px, LineStyle.Solid, palette.cardBorder)
                     .boxShadow((-4).px, 0.px, 20.px, 0.px, rgba(0, 0, 0, 0.25))

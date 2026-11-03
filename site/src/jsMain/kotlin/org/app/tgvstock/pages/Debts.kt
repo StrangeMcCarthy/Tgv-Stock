@@ -21,13 +21,18 @@ import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
+import com.varabyte.kobweb.compose.ui.styleModifier
+import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -63,28 +68,25 @@ fun DebtsPage() {
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
         // Header
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text("Gestion des Dettes & Créances Clients")
                 }
-                Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                     Text("Saisissez le nom du débiteur et le nombre de casiers. Le montant total est calculé automatiquement à partir du prix du casier.")
                 }
             }
 
-            Spacer()
-
-            AppButton(
-                text = "Nouvelle Dette",
-                onClick = { showNewDebtModal = true },
-                icon = { FaPlus() },
-                backgroundColor = palette.danger,
-                textColor = Colors.White
-            )
+            Div(HeaderActionsStyle.toAttrs()) {
+                AppButton(
+                    text = "Nouvelle Dette",
+                    onClick = { showNewDebtModal = true },
+                    icon = { FaPlus() },
+                    backgroundColor = palette.danger,
+                    textColor = Colors.White
+                )
+            }
         }
 
         // Summary KPI cards
@@ -92,8 +94,8 @@ fun DebtsPage() {
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
-                .gap(1.2.cssRem)
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(150px, 1fr))") }
+                .gap(0.85.cssRem)
                 .toAttrs()
         ) {
             StatCard(
@@ -123,12 +125,17 @@ fun DebtsPage() {
 
         // Filter and Search Bar
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
-            Row(
-                Modifier.fillMaxWidth().gap(1.cssRem),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Div(FilterBarStyle.toAttrs()) {
                 // Filter status
-                Row(Modifier.gap(0.5.cssRem)) {
+                Row(
+                    Modifier
+                        .gap(0.5.cssRem)
+                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
+                        .styleModifier {
+                            property("-webkit-overflow-scrolling", "touch")
+                            property("white-space", "nowrap")
+                        }
+                ) {
                     listOf("Tous", "Non Payé", "Partiel", "Réglé").forEach { st ->
                         val isSelected = filterStatus == st
                         Button(
@@ -146,14 +153,12 @@ fun DebtsPage() {
                     }
                 }
 
-                Spacer()
-
                 AppTextInput(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholderText = "Chercher débiteur ou produit...",
                     type = "search",
-                    modifier = Modifier.width(16.cssRem)
+                    modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
             }
         }
@@ -161,12 +166,7 @@ fun DebtsPage() {
         // Debts Table
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-                Div(
-                    Modifier
-                        .fillMaxWidth()
-                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                        .toAttrs()
-                ) {
+                ResponsiveTableContainer(minWidth = 850.px) {
                     Table(
                         Modifier
                             .fillMaxWidth()

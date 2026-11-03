@@ -21,14 +21,18 @@ import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
+import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
 import org.app.tgvstock.LocalLanguage
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -62,27 +66,24 @@ fun EntriesPage() {
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
         // Header
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.entriesPageTitle)
                 }
-                Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                     Text(strings.entriesPageSubtitle)
                 }
             }
 
-            Spacer()
-
-            AppButton(
-                text = strings.btnNewEntry,
-                onClick = { showNewEntryModal = true },
-                icon = { FaTruck() },
-                backgroundColor = palette.brand.primary
-            )
+            Div(HeaderActionsStyle.toAttrs()) {
+                AppButton(
+                    text = strings.btnNewEntry,
+                    onClick = { showNewEntryModal = true },
+                    icon = { FaTruck() },
+                    backgroundColor = palette.brand.primary
+                )
+            }
         }
 
         val totalBonusBottles = filteredEntries.filter { it.calculatedTotalExtraBottles > 0 }.sumOf { it.calculatedTotalExtraBottles }
@@ -92,8 +93,8 @@ fun EntriesPage() {
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
-                .gap(1.2.cssRem)
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(150px, 1fr))") }
+                .gap(0.85.cssRem)
                 .toAttrs()
         ) {
             StatCard(
@@ -133,10 +134,7 @@ fun EntriesPage() {
 
         // Filter & Search Bar
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
-            Row(
-                Modifier.fillMaxWidth().gap(1.cssRem),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Div(FilterBarStyle.toAttrs()) {
                 Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                     Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
                         Text(strings.filterByDate)
@@ -156,14 +154,12 @@ fun EntriesPage() {
                     }
                 }
 
-                Spacer()
-
                 AppTextInput(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholderText = strings.placeholderSearchEntry,
                     type = "search",
-                    modifier = Modifier.width(16.cssRem)
+                    modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
             }
         }
@@ -171,12 +167,7 @@ fun EntriesPage() {
         // Entries Table
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-                Div(
-                    Modifier
-                        .fillMaxWidth()
-                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                        .toAttrs()
-                ) {
+                ResponsiveTableContainer(minWidth = 800.px) {
                     Table(
                         Modifier
                             .fillMaxWidth()

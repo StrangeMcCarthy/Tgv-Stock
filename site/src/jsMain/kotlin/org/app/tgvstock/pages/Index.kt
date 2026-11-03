@@ -22,15 +22,20 @@ import com.varabyte.kobweb.core.rememberPageContext
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
+import com.varabyte.kobweb.compose.css.AlignItems
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import kotlin.math.roundToInt
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
 import org.app.tgvstock.models.*
 import org.app.tgvstock.ActionCardStyle
+import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
 import org.app.tgvstock.LocalLanguage
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -76,12 +81,9 @@ fun HomePage() {
     Column(Modifier.fillMaxWidth().gap(2.cssRem)) {
 
         // Hero & Header
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.5.cssRem)) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.5.cssRem).flexWrap(FlexWrap.Wrap)) {
                     Span(HeadlineTextStyle.toModifier().toAttrs()) {
                         Text(strings.dashTitle)
                     }
@@ -97,14 +99,12 @@ fun HomePage() {
                         Text(strings.operational)
                     }
                 }
-                Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                     Text("Date: ${StockRepository.todayString()} — ${strings.dashSubtitle}")
                 }
             }
 
-            Spacer()
-
-            Row(Modifier.gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
+            Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
                     text = strings.btnInventorySheet,
                     onClick = { router.tryRoutingTo("/inventory") },
@@ -126,8 +126,8 @@ fun HomePage() {
             Modifier
                 .fillMaxWidth()
                 .display(DisplayStyle.Grid)
-                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(220px, 1fr))") }
-                .gap(1.2.cssRem)
+                .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(150px, 1fr))") }
+                .gap(0.85.cssRem)
                 .toAttrs()
         ) {
             StatCard(
@@ -188,8 +188,8 @@ fun HomePage() {
                     Modifier
                         .fillMaxWidth()
                         .display(DisplayStyle.Grid)
-                        .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(180px, 1fr))") }
-                        .gap(1.cssRem)
+                        .styleModifier { property("grid-template-columns", "repeat(auto-fit, minmax(135px, 1fr))") }
+                        .gap(0.75.cssRem)
                         .toAttrs()
                 ) {
                     QuickActionTile(
@@ -281,32 +281,31 @@ fun HomePage() {
                     .backgroundColor(Color.rgb(0xFEF2F2))
                     .border(1.px, LineStyle.Solid, Color.rgb(0xFECACA))
                     .borderRadius(12.px)
-                    .padding(1.cssRem)
+                    .padding(0.85.cssRem)
             ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        Modifier
-                            .size(2.2.cssRem)
-                            .borderRadius(50.percent)
-                            .backgroundColor(Color.rgb(0xEF4444))
-                            .color(Colors.White)
-                            .margin(right = 0.8.cssRem),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        FaTriangleExclamation()
-                    }
-                    Column {
-                        Span(Modifier.fontWeight(FontWeight.Bold).color(Color.rgb(0x991B1B)).fontSize(0.95.cssRem).toAttrs()) {
-                            Text("${strings.lowStockAlert} (${lowStockList.size} ${strings.lowStockAlertSub})")
+                Div(PageHeaderStyle.toAttrs()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier
+                                .size(2.2.cssRem)
+                                .flexShrink(0)
+                                .borderRadius(50.percent)
+                                .backgroundColor(Color.rgb(0xEF4444))
+                                .color(Colors.White)
+                                .margin(right = 0.8.cssRem),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            FaTriangleExclamation()
                         }
-                        Span(Modifier.color(Color.rgb(0x7F1D1D)).fontSize(0.85.cssRem).toAttrs()) {
-                            Text(lowStockList.take(6).joinToString(", ") { "${it.product.name} (${it.resteTheorique.toInt()} ${strings.crates})" } + if (lowStockList.size > 6) "..." else "")
+                        Column {
+                            Span(Modifier.fontWeight(FontWeight.Bold).color(Color.rgb(0x991B1B)).fontSize(0.92.cssRem).toAttrs()) {
+                                Text("${strings.lowStockAlert} (${lowStockList.size} ${strings.lowStockAlertSub})")
+                            }
+                            Span(Modifier.color(Color.rgb(0x7F1D1D)).fontSize(0.8.cssRem).toAttrs()) {
+                                Text(lowStockList.take(6).joinToString(", ") { "${it.product.name} (${it.resteTheorique.toInt()} ${strings.crates})" } + if (lowStockList.size > 6) "..." else "")
+                            }
                         }
                     }
-                    Spacer()
                     AppButton(
                         text = strings.btnRestock,
                         onClick = { showEntryModal = true },
@@ -320,38 +319,28 @@ fun HomePage() {
 
         // Real-Time Stock Status Table
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth().gap(1.2.cssRem)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
+                Div(FilterBarStyle.toAttrs()) {
                     Column {
-                        Span(Modifier.fontSize(1.2.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
+                        Span(Modifier.fontSize(1.15.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
                             Text(strings.tableStockTitle)
                         }
-                        Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
+                        Span(Modifier.fontSize(0.82.cssRem).color(palette.textMuted).toAttrs()) {
                             Text(strings.tableStockSubtitle)
                         }
                     }
-
-                    Spacer()
 
                     AppTextInput(
                         value = stockSearchQuery,
                         onValueChange = { stockSearchQuery = it },
                         placeholderText = strings.searchProduct,
                         type = "search",
-                        modifier = Modifier.width(18.cssRem)
+                        modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                     )
                 }
 
                 // Table
-                Div(
-                    Modifier
-                        .fillMaxWidth()
-                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                        .toAttrs()
-                ) {
+                ResponsiveTableContainer(minWidth = 780.px) {
                     Table(
                         Modifier
                             .fillMaxWidth()
@@ -559,7 +548,7 @@ fun QuickSaleModal(
                     )
 
                     if (supportsHalfCrate) {
-                        Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.fillMaxWidth().gap(0.35.cssRem).flexWrap(FlexWrap.Wrap), verticalAlignment = Alignment.CenterVertically) {
                             Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
                                 Text("Demi-casier :")
                             }
@@ -1286,13 +1275,7 @@ fun StockAuditQuickModal(isOpen: Boolean, onClose: () -> Unit) {
                 Text("Vue globale du stock théorique calculé vs stock physique compté.")
             }
 
-            Div(
-                Modifier
-                    .fillMaxWidth()
-                    .maxHeight(50.vh)
-                    .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                    .toAttrs()
-            ) {
+            ResponsiveTableContainer(minWidth = 620.px, modifier = Modifier.maxHeight(50.vh)) {
                 Table(
                     Modifier.fillMaxWidth().borderCollapse(com.varabyte.kobweb.compose.css.BorderCollapse.Collapse).fontSize(0.85.cssRem).toAttrs()
                 ) {

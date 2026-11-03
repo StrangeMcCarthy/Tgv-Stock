@@ -22,14 +22,20 @@ import com.varabyte.kobweb.compose.ui.styleModifier
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
+import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
+import com.varabyte.kobweb.compose.ui.styleModifier
+import org.app.tgvstock.FilterBarStyle
+import org.app.tgvstock.FilterControlsGroupStyle
 import org.app.tgvstock.GlassCardStyle
+import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
 import org.app.tgvstock.LocalLanguage
+import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
@@ -66,38 +72,40 @@ fun InventoryPage() {
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
         // Header
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.inventoryPageTitle)
                 }
-                Span(Modifier.fontSize(0.95.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
                     Text(strings.inventoryPageSubtitle)
                 }
             }
 
-            Spacer()
-
-            AppButton(
-                text = strings.btnExportPdf,
-                onClick = { router.tryRoutingTo("/reports") },
-                icon = { FaFilePdf() },
-                backgroundColor = Color.rgb(0xDC2626),
-                textColor = Colors.White
-            )
+            Div(HeaderActionsStyle.toAttrs()) {
+                AppButton(
+                    text = strings.btnExportPdf,
+                    onClick = { router.tryRoutingTo("/reports") },
+                    icon = { FaFilePdf() },
+                    backgroundColor = Color.rgb(0xDC2626),
+                    textColor = Colors.White
+                )
+            }
         }
 
         // Period & Date Filter Card
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
-            Row(
-                Modifier.fillMaxWidth().gap(1.2.cssRem),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Div(FilterBarStyle.toAttrs()) {
                 // Period tabs
-                Row(Modifier.gap(0.4.cssRem)) {
+                Row(
+                    Modifier
+                        .gap(0.4.cssRem)
+                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
+                        .styleModifier {
+                            property("-webkit-overflow-scrolling", "touch")
+                            property("white-space", "nowrap")
+                        }
+                ) {
                     listOf(
                         strings.periodDaily to "Daily",
                         strings.periodWeekly to "Weekly",
@@ -120,68 +128,68 @@ fun InventoryPage() {
                     }
                 }
 
-                if (selectedPeriod == "Daily") {
+                Div(FilterControlsGroupStyle.toAttrs()) {
+                    if (selectedPeriod == "Daily") {
+                        Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                            Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
+                                Text(strings.labelDate)
+                            }
+                            org.jetbrains.compose.web.dom.Input(
+                                type = InputType.Date,
+                                attrs = Modifier
+                                    .padding(0.4.cssRem)
+                                    .borderRadius(6.px)
+                                    .border(1.px, LineStyle.Solid, palette.cardBorder)
+                                    .backgroundColor(palette.inputBackground)
+                                    .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                    .toAttrs {
+                                        value(selectedDate)
+                                        onInput { selectedDate = it.value }
+                                    }
+                            )
+                        }
+                    }
+
                     Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                            Text(strings.labelDate)
+                            Text(strings.labelSeller)
                         }
                         org.jetbrains.compose.web.dom.Input(
-                            type = InputType.Date,
+                            type = InputType.Text,
                             attrs = Modifier
+                                .width(9.cssRem)
                                 .padding(0.4.cssRem)
                                 .borderRadius(6.px)
                                 .border(1.px, LineStyle.Solid, palette.cardBorder)
                                 .backgroundColor(palette.inputBackground)
                                 .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                 .toAttrs {
-                                    value(selectedDate)
-                                    onInput { selectedDate = it.value }
+                                    value(sellerName)
+                                    onInput { sellerName = it.value }
                                 }
                         )
                     }
-                }
 
-                Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
-                    Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                        Text(strings.labelSeller)
+                    Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                        Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.brand.primary).toAttrs()) {
+                            Text(strings.labelCashDeposit)
+                        }
+                        org.jetbrains.compose.web.dom.Input(
+                            type = InputType.Number,
+                            attrs = Modifier
+                                .width(9.cssRem)
+                                .padding(0.4.cssRem)
+                                .borderRadius(6.px)
+                                .border(1.px, LineStyle.Solid, palette.brand.primary)
+                                .backgroundColor(palette.inputBackground)
+                                .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
+                                .toAttrs {
+                                    placeholder("${finalVersement.toLong()}")
+                                    value(versementInput)
+                                    onInput { versementInput = it.value?.toString() ?: "" }
+                                }
+                        )
                     }
-                    org.jetbrains.compose.web.dom.Input(
-                        type = InputType.Text,
-                        attrs = Modifier
-                            .width(12.cssRem)
-                            .padding(0.4.cssRem)
-                            .borderRadius(6.px)
-                            .border(1.px, LineStyle.Solid, palette.cardBorder)
-                            .backgroundColor(palette.inputBackground)
-                            .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
-                            .toAttrs {
-                                value(sellerName)
-                                onInput { sellerName = it.value }
-                            }
-                    )
-                }
-
-                Spacer()
-
-                Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
-                    Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.brand.primary).toAttrs()) {
-                        Text(strings.labelCashDeposit)
-                    }
-                    org.jetbrains.compose.web.dom.Input(
-                        type = InputType.Number,
-                        attrs = Modifier
-                            .width(10.cssRem)
-                            .padding(0.4.cssRem)
-                            .borderRadius(6.px)
-                            .border(1.px, LineStyle.Solid, palette.brand.primary)
-                            .backgroundColor(palette.inputBackground)
-                            .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
-                            .toAttrs {
-                                placeholder("${finalVersement.toLong()}")
-                                value(versementInput)
-                                onInput { versementInput = it.value?.toString() ?: "" }
-                            }
-                    )
                 }
             }
         }
@@ -279,10 +287,7 @@ fun InventoryPage() {
         // Detailed Inventory Table (Matching Sheet 2: FICHE D'INVENTAIRE DEPOT ZAMBOY)
         Box(GlassCardStyle.toModifier().fillMaxWidth()) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Div(FilterBarStyle.toAttrs()) {
                     Column {
                         Span(Modifier.fontSize(1.1.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
                             Text(strings.stockDetailTitle)
@@ -291,18 +296,12 @@ fun InventoryPage() {
                             Text(strings.stockDetailSubtitle)
                         }
                     }
-                    Spacer()
                     Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.SemiBold).color(palette.brand.primary).toAttrs()) {
                         Text("${rows.size} ${strings.inventoryLines}")
                     }
                 }
 
-                Div(
-                    Modifier
-                        .fillMaxWidth()
-                        .overflow(com.varabyte.kobweb.compose.css.Overflow.Auto)
-                        .toAttrs()
-                ) {
+                ResponsiveTableContainer(minWidth = 980.px) {
                     Table(
                         Modifier
                             .fillMaxWidth()
