@@ -106,9 +106,9 @@ fun EntriesPage() {
             )
 
             StatCard(
-                title = "Extras & Bonus Reçus",
-                value = "+$totalBonusBottles btl",
-                subtitle = "Bouteilles supplémentaires brasserie",
+                title = strings.statBonusReceived,
+                value = "+$totalBonusBottles ${strings.bottlesAbbr}",
+                subtitle = strings.statBonusReceivedSub,
                 icon = { FaBoxesStacked() },
                 accentColor = palette.success
             )
@@ -185,7 +185,7 @@ fun EntriesPage() {
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.date) }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProduct) }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colQuantityEntered) }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("Extras / Écarts") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colExtrasGaps) }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSupplier) }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.notes) }
                                 Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.actions) }
@@ -228,14 +228,14 @@ fun EntriesPage() {
                                                             .display(DisplayStyle.InlineBlock)
                                                     ) {
                                                         if (entry.extras != 0) {
-                                                            Text("$sign${entry.extras} btl/casier")
+                                                            Text("$sign${entry.extras} ${strings.extrasBtlPerCrate}")
                                                         } else {
-                                                            Text("$sign$totalBonus btl")
+                                                            Text("$sign$totalBonus ${strings.bottlesAbbr}")
                                                         }
                                                     }
                                                     if (entry.extras != 0 && entry.quantityCrates > 1.0) {
                                                         Span(Modifier.fontSize(0.72.cssRem).color(extrasColor).fontWeight(FontWeight.SemiBold).margin(top = 0.1.cssRem).toAttrs()) {
-                                                            Text("($sign$totalBonus btl au total)")
+                                                            Text("($sign$totalBonus ${strings.extrasBtlTotal})")
                                                         }
                                                     }
                                                     if (entry.motif.isNotBlank()) {

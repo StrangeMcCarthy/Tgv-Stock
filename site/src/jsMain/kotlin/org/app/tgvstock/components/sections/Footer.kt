@@ -18,6 +18,8 @@ import org.jetbrains.compose.web.css.cssRem
 import org.jetbrains.compose.web.css.percent
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.Span
+import org.app.tgvstock.LocalLanguage
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 val FooterStyle = CssStyle.base {
@@ -31,10 +33,11 @@ val FooterStyle = CssStyle.base {
 @Composable
 fun Footer(modifier: Modifier = Modifier) {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
     Box(FooterStyle.toModifier().then(modifier), contentAlignment = Alignment.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Span(Modifier.textAlign(TextAlign.Center).fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                SpanText("© 2026 TGV Stock — Système Intégré de Gestion de Dépôt de Boissons (Ventes, Stocks, Emballages, Avaries & Dettes)")
+                SpanText(strings.footerCopyright)
             }
         }
     }

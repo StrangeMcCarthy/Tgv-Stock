@@ -23,20 +23,19 @@ import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
-import org.jetbrains.compose.web.attributes.InputType
-import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
-import com.varabyte.kobweb.compose.ui.styleModifier
 import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
 import org.app.tgvstock.models.Debt
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
@@ -49,6 +48,7 @@ fun initDebtsPage(ctx: InitRouteContext) {
 @Composable
 fun DebtsPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
     var showNewDebtModal by remember { mutableStateOf(false) }
     var debtToPay by remember { mutableStateOf<Debt?>(null) }
@@ -71,16 +71,16 @@ fun DebtsPage() {
         Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                    Text("Gestion des Dettes & Créances Clients")
+                    Text(strings.debtsPageTitle)
                 }
                 Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Saisissez le nom du débiteur et le nombre de casiers. Le montant total est calculé automatiquement à partir du prix du casier.")
+                    Text(strings.debtsPageSubtitle)
                 }
             }
 
             Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
-                    text = "Nouvelle Dette",
+                    text = strings.btnNewDebt,
                     onClick = { showNewDebtModal = true },
                     icon = { FaPlus() },
                     backgroundColor = palette.danger,
@@ -99,25 +99,25 @@ fun DebtsPage() {
                 .toAttrs()
         ) {
             StatCard(
-                title = "Dettes Restantes à Recouvrer",
+                title = strings.statTotalDebtsDue,
                 value = formatFcfa(totalOutstanding),
-                subtitle = "${debtsList.filter { it.status != "Réglé" }.size} créances non soldées",
+                subtitle = "${debtsList.filter { it.status != "Réglé" }.size} ${strings.statTotalDebtsDueSub}",
                 icon = { FaHandHoldingDollar() },
                 accentColor = palette.danger
             )
 
             StatCard(
-                title = "Total Remboursé / Encaissé",
+                title = strings.statTotalRecovered,
                 value = formatFcfa(totalSettled),
-                subtitle = "Paiements partiels et complets",
+                subtitle = strings.statTotalRecoveredSub,
                 icon = { FaCoins() },
                 accentColor = palette.success
             )
 
             StatCard(
-                title = "Montant Total des Crédits",
-                value = formatFcfa(debtsList.sumOf { it.totalAmount }),
-                subtitle = "Cumul global des dettes accordées",
+                title = strings.statDebtorsCount,
+                value = "${debtsList.map { it.debtorName }.distinct().size}",
+                subtitle = strings.statDebtorsCountSub,
                 icon = { FaReceipt() },
                 accentColor = palette.brand.primary
             )
@@ -136,10 +136,15 @@ fun DebtsPage() {
                             property("white-space", "nowrap")
                         }
                 ) {
-                    listOf("Tous", "Non Payé", "Partiel", "Réglé").forEach { st ->
-                        val isSelected = filterStatus == st
+                    listOf(
+                        "Tous" to strings.statusAll,
+                        "Non Payé" to strings.statusPending,
+                        "Partiel" to strings.statusPartial,
+                        "Réglé" to strings.statusSettled
+                    ).forEach { (stKey, stLabel) ->
+                        val isSelected = filterStatus == stKey
                         Button(
-                            onClick = { filterStatus = st },
+                            onClick = { filterStatus = stKey },
                             Modifier
                                 .fontSize(0.85.cssRem)
                                 .padding(leftRight = 0.8.cssRem, topBottom = 0.35.cssRem)
@@ -148,7 +153,7 @@ fun DebtsPage() {
                                 .color(if (isSelected) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                 .border(1.px, LineStyle.Solid, if (isSelected) palette.brand.primary else palette.cardBorder)
                         ) {
-                            Text(st)
+                            Text(stLabel)
                         }
                     }
                 }
@@ -156,7 +161,7 @@ fun DebtsPage() {
                 AppTextInput(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholderText = "Chercher débiteur ou produit...",
+                    placeholderText = strings.placeholderSearchDebts,
                     type = "search",
                     modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
@@ -181,23 +186,23 @@ fun DebtsPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("DATE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("NOM DU DÉBITEUR") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("PRODUIT DÛ") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("CASIERS DUS") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("P.U CASIER") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("TOTAL CALCULÉ") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("AVANCÉ / PAYÉ") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("RESTE DÛ") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("STATUT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTIONS") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSaleDate) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colDebtorName) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProductOwed) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colCratesOwed) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colSaleUnitPrice) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colTotalOwed) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colAmountPaid) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colRemainingOwed) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.status) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.actions) }
                             }
                         }
                         Tbody {
                             if (filteredDebts.isEmpty()) {
                                 Tr {
                                     Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "10") }) {
-                                        Text("Aucune dette enregistrée pour ce filtre.")
+                                        Text(strings.noDebtsRecorded)
                                     }
                                 }
                             } else {
@@ -218,7 +223,7 @@ fun DebtsPage() {
                                         Td(Modifier.padding(0.75.cssRem).toAttrs()) { Text(debt.productName) }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) {
                                             val qtyStr = if (debt.quantityCrates == debt.quantityCrates.toLong().toDouble()) debt.quantityCrates.toLong().toString() else debt.quantityCrates.toString()
-                                            Text("$qtyStr casiers")
+                                            Text("$qtyStr ${strings.crates}")
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) {
                                             Text(formatFcfa(debt.unitPrice))
@@ -243,6 +248,11 @@ fun DebtsPage() {
                                                 "Partiel" -> Color.rgb(0x92400E)
                                                 else -> Color.rgb(0x991B1B)
                                             }
+                                            val badgeText = when (debt.status) {
+                                                "Réglé" -> strings.statusBadgeSettled
+                                                "Partiel" -> strings.statusBadgePartial
+                                                else -> strings.statusBadgePending
+                                            }
                                             Box(
                                                 Modifier
                                                     .backgroundColor(badgeBg)
@@ -253,7 +263,7 @@ fun DebtsPage() {
                                                     .fontWeight(FontWeight.Bold)
                                                     .display(DisplayStyle.InlineBlock)
                                             ) {
-                                                Text(debt.status)
+                                                Text(badgeText)
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
@@ -272,7 +282,7 @@ fun DebtsPage() {
                                                             .color(Colors.White)
                                                             .fontSize(0.8.cssRem)
                                                     ) {
-                                                        Text("Régler")
+                                                        Text(strings.btnSettleDebt)
                                                     }
                                                 }
                                                 Button(
@@ -321,9 +331,10 @@ fun DebtPaymentModal(
     onClose: () -> Unit,
     onConfirm: (Double) -> Unit
 ) {
+    val strings = LocalLanguage.current.strings()
     var paymentAmount by remember { mutableStateOf(debt.remainingAmount.toString()) }
 
-    ModalDialog(title = "Enregistrer un Remboursement pour ${debt.debtorName}", isOpen = isOpen, onClose = onClose) {
+    ModalDialog(title = "${strings.modalSettleDebtTitle} : ${debt.debtorName}", isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
             Box(
                 Modifier
@@ -335,15 +346,15 @@ fun DebtPaymentModal(
                 Column(Modifier.fillMaxWidth().gap(0.3.cssRem)) {
                     val initQtyStr = if (debt.quantityCrates == debt.quantityCrates.toLong().toDouble()) debt.quantityCrates.toLong().toString() else debt.quantityCrates.toString()
                     Span(Modifier.fontSize(0.9.cssRem).color(Color.rgb(0x92400E)).toAttrs()) {
-                        Text("Dette initiale : ${formatFcfa(debt.totalAmount)} ($initQtyStr casiers de ${debt.productName})")
+                        Text("${strings.colTotalOwed} : ${formatFcfa(debt.totalAmount)} ($initQtyStr ${strings.crates} - ${debt.productName})")
                     }
                     Span(Modifier.fontSize(0.9.cssRem).fontWeight(FontWeight.Bold).color(Color.rgb(0x92400E)).toAttrs()) {
-                        Text("Reste à payer actuel : ${formatFcfa(debt.remainingAmount)}")
+                        Text("${strings.labelRemainingToPay} ${formatFcfa(debt.remainingAmount)}")
                     }
                 }
             }
 
-            FormField(label = "Montant du Versement / Remboursement (FCFA)") {
+            FormField(label = strings.fieldPaymentAmount) {
                 AppTextInput(
                     value = paymentAmount,
                     onValueChange = { paymentAmount = it },
@@ -357,14 +368,14 @@ fun DebtPaymentModal(
                     onClick = { paymentAmount = debt.remainingAmount.toString() },
                     Modifier.fontSize(0.8.cssRem).padding(leftRight = 0.6.cssRem, topBottom = 0.4.cssRem)
                 ) {
-                    Text("Solder la totalité")
+                    Text(strings.btnSettleDebt)
                 }
                 Spacer()
                 Button(onClick = { onClose() }, Modifier.borderRadius(8.px).padding(leftRight = 1.cssRem, topBottom = 0.5.cssRem)) {
-                    Text("Annuler")
+                    Text(strings.cancel)
                 }
                 AppButton(
-                    text = "Valider le Paiement",
+                    text = strings.btnSavePayment,
                     onClick = {
                         val amt = paymentAmount.toDoubleOrNull() ?: 0.0
                         if (amt > 0.0) {

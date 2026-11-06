@@ -31,10 +31,12 @@ import org.jetbrains.compose.web.dom.*
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 import kotlin.math.roundToInt
 
@@ -48,6 +50,7 @@ fun initSpoiledPage(ctx: InitRouteContext) {
 @Composable
 fun SpoiledPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
     var showNewSpoiledModal by remember { mutableStateOf(false) }
 
     val spoiledList = StockRepository.spoiled
@@ -60,16 +63,16 @@ fun SpoiledPage() {
         Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                    Text("Gestion des Produits Gâtés & Avaries")
+                    Text(strings.spoiledPageTitle)
                 }
                 Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Déclarez les bouteilles cassées, altérées ou défectueuses, déduites automatiquement du stock.")
+                    Text(strings.spoiledPageSubtitle)
                 }
             }
 
             Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
-                    text = "Déclarer une Avarie",
+                    text = strings.btnDeclareSpoiled,
                     onClick = { showNewSpoiledModal = true },
                     icon = { FaWineGlass() },
                     backgroundColor = palette.danger,
@@ -88,25 +91,25 @@ fun SpoiledPage() {
                 .toAttrs()
         ) {
             StatCard(
-                title = "Total Bouteilles Avariées",
-                value = "$totalBottles bouteilles",
-                subtitle = "${spoiledList.size} déclarations d'avaries",
+                title = strings.statTotalSpoiledBottles,
+                value = "$totalBottles ${strings.bottles}",
+                subtitle = "${spoiledList.size} ${strings.statSpoiledDeclarationsSub}",
                 icon = { FaWineBottle() },
                 accentColor = palette.danger
             )
 
             StatCard(
-                title = "Perte Financière Totale",
+                title = strings.statEstimatedLoss,
                 value = formatFcfa(totalLoss),
-                subtitle = "Calculée au prorata du prix par bouteille",
+                subtitle = strings.statEstimatedLossSub,
                 icon = { FaMoneyBillWave() },
                 accentColor = Color.rgb(0xDC2626)
             )
 
             StatCard(
-                title = "Équivalent Casiers",
-                value = "~${((totalBottles / 12.0) * 10.0).roundToInt() / 10.0} casiers",
-                subtitle = "Impact sur le stock théorique",
+                title = strings.colRemainingStock,
+                value = "~${((totalBottles / 12.0) * 10.0).roundToInt() / 10.0} ${strings.crates}",
+                subtitle = strings.statStockValueSub,
                 icon = { FaBoxOpen() },
                 accentColor = palette.brand.primary
             )
@@ -130,19 +133,19 @@ fun SpoiledPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("DATE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("PRODUIT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("QUANTITÉ EN BOUTEILLES") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("PERTE ESTIMÉE (FCFA)") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("MOTIF / COMMENTAIRE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTION") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSaleDate) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.product) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colSpoiledBottles) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colEstimatedLoss) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colCauseComment) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.actions) }
                             }
                         }
                         Tbody {
                             if (spoiledList.isEmpty()) {
                                 Tr {
                                     Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "6") }) {
-                                        Text("Aucune avarie enregistrée. Le stock est intact.")
+                                        Text(strings.noSpoiledRecorded)
                                     }
                                 }
                             } else {
@@ -151,13 +154,13 @@ fun SpoiledPage() {
                                         Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) { Text(sp.date) }
                                         Td(Modifier.padding(0.75.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text(sp.productName) }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).color(palette.danger).toAttrs()) {
-                                            Text("${sp.quantityBottles} bouteilles")
+                                            Text("${sp.quantityBottles} ${strings.bottles}")
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).fontWeight(FontWeight.Bold).color(palette.danger).toAttrs()) {
                                             Text(formatFcfa(sp.estimatedLoss))
                                         }
                                         Td(Modifier.padding(0.75.cssRem).toAttrs()) {
-                                            Text(sp.comment.ifBlank { "Aucun commentaire" })
+                                            Text(sp.comment.ifBlank { "—" })
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
                                             Button(

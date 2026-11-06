@@ -2,6 +2,7 @@ package org.app.tgvstock.pages
 
 import androidx.compose.runtime.*
 import com.varabyte.kobweb.compose.css.FontWeight
+import com.varabyte.kobweb.compose.css.ObjectFit
 import com.varabyte.kobweb.compose.css.TextAlign
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import com.varabyte.kobweb.core.init.InitRoute
 import com.varabyte.kobweb.core.init.InitRouteContext
 import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.forms.Button
+import com.varabyte.kobweb.silk.components.graphics.Image
 import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.style.toAttrs
@@ -31,10 +33,12 @@ import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
@@ -47,12 +51,13 @@ fun initReportsPage(ctx: InitRouteContext) {
 @Composable
 fun ReportsPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
-    var selectedPeriod by remember { mutableStateOf("Journalier") }
+    var selectedPeriodKey by remember { mutableStateOf("Daily") }
     var selectedDate by remember { mutableStateOf(StockRepository.todayString()) }
     var sellerName by remember { mutableStateOf("Vendeur ZAMBOY") }
 
-    val dateFilter = if (selectedPeriod == "Journalier") selectedDate else null
+    val dateFilter = if (selectedPeriodKey == "Daily") selectedDate else null
     val rows = StockRepository.getInventoryRows(dateFilter)
     val recon = StockRepository.getFinancialReconciliation(dateFilter)
 
@@ -63,6 +68,14 @@ fun ReportsPage() {
     val totalDettes = recon.totalDettes
     val difference = recon.difference
 
+    val periodLabel = when (selectedPeriodKey) {
+        "Daily" -> strings.periodDaily
+        "Weekly" -> strings.periodWeekly
+        "Monthly" -> strings.periodMonthly
+        "Yearly" -> strings.periodYearly
+        else -> selectedPeriodKey
+    }
+
     Column(Modifier.fillMaxWidth().gap(1.8.cssRem)) {
 
         // Controls bar (hidden during print)
@@ -71,16 +84,16 @@ fun ReportsPage() {
                 Div(PageHeaderStyle.toAttrs()) {
                     Column(Modifier.gap(0.2.cssRem)) {
                         Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                            Text("Générateur de Rapports d'Inventaire")
+                            Text(strings.reportsPageTitle)
                         }
                         Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                            Text("Générez des rapports journaliers, hebdomadaires ou annuels conformes à la fiche du dépôt et exportez-les au format PDF.")
+                            Text(strings.reportsPageSubtitle)
                         }
                     }
 
                     Div(HeaderActionsStyle.toAttrs()) {
                         AppButton(
-                            text = "Exporter / Imprimer en PDF",
+                            text = strings.btnPrintPdf,
                             onClick = {
                                 window.print()
                             },
@@ -104,12 +117,17 @@ fun ReportsPage() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.textMuted).toAttrs()) {
-                            Text("Période :")
+                            Text(strings.reportPeriodLabel)
                         }
-                        listOf("Journalier", "Hebdomadaire", "Mensuel", "Annuel").forEach { p ->
-                            val isSelected = selectedPeriod == p
+                        listOf(
+                            "Daily" to strings.periodDaily,
+                            "Weekly" to strings.periodWeekly,
+                            "Monthly" to strings.periodMonthly,
+                            "Yearly" to strings.periodYearly
+                        ).forEach { (pKey, pLabel) ->
+                            val isSelected = selectedPeriodKey == pKey
                             Button(
-                                onClick = { selectedPeriod = p },
+                                onClick = { selectedPeriodKey = pKey },
                                 Modifier
                                     .fontSize(0.85.cssRem)
                                     .padding(leftRight = 0.8.cssRem, topBottom = 0.35.cssRem)
@@ -118,16 +136,16 @@ fun ReportsPage() {
                                     .color(if (isSelected) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                     .border(1.px, LineStyle.Solid, if (isSelected) palette.brand.primary else palette.cardBorder)
                             ) {
-                                Text(p)
+                                Text(pLabel)
                             }
                         }
                     }
 
                     Row(Modifier.gap(0.75.cssRem).flexWrap(FlexWrap.Wrap), verticalAlignment = Alignment.CenterVertically) {
-                        if (selectedPeriod == "Journalier") {
+                        if (selectedPeriodKey == "Daily") {
                             Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                                 Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.textMuted).toAttrs()) {
-                                    Text("Date :")
+                                    Text(strings.reportDateLabel)
                                 }
                                 AppTextInput(
                                     value = selectedDate,
@@ -139,7 +157,7 @@ fun ReportsPage() {
 
                         Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                             Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(palette.textMuted).toAttrs()) {
-                                Text("Nom Vendeur :")
+                                Text(strings.reportSellerLabel)
                             }
                             AppTextInput(
                                 value = sellerName,
@@ -171,21 +189,29 @@ fun ReportsPage() {
                     Modifier.fillMaxWidth().borderBottom(2.px, LineStyle.Solid, Colors.Black).padding(bottom = 0.8.cssRem),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Image(
+                        src = "/favicon.ico",
+                        description = "TGV Stock Logo",
+                        modifier = Modifier
+                            .size(2.6.cssRem)
+                            .margin(right = 0.75.cssRem)
+                            .objectFit(ObjectFit.Contain)
+                    )
                     Column {
                         Span(Modifier.fontSize(1.4.cssRem).fontWeight(FontWeight.ExtraBold).letterSpacing(1.px).toAttrs()) {
-                            Text("FICHE D'INVENTAIRE DEPOT — TGV STOCK")
+                            Text(strings.docSheetTitle)
                         }
                         Span(Modifier.fontSize(0.85.cssRem).color(Color.rgb(0x4B5563)).toAttrs()) {
-                            Text("Système de Gestion Commerciale & Comptabilité Matière")
+                            Text(strings.docSheetSubtitle)
                         }
                     }
                     Spacer()
                     Column(Modifier.textAlign(TextAlign.End)) {
                         Span(Modifier.fontSize(0.9.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                            Text("VENDEUR : $sellerName")
+                            Text("${strings.docSellerLabel} $sellerName")
                         }
                         Span(Modifier.fontSize(0.85.cssRem).color(Color.rgb(0x4B5563)).toAttrs()) {
-                            Text("PÉRIODE : $selectedPeriod ($selectedDate)")
+                            Text("${strings.docPeriodLabel} $periodLabel ($selectedDate)")
                         }
                     }
                 }
@@ -204,33 +230,33 @@ fun ReportsPage() {
                             ) {
                                 Thead {
                                     Tr(Modifier.backgroundColor(Color.rgb(0xF3F4F6)).toAttrs()) {
-                                        Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Start).toAttrs()) { Text("RUBRIQUE INVENTAIRE") }
-                                        Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text("MONTANT (FCFA)") }
+                                        Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Start).toAttrs()) { Text(strings.docRubricTitle) }
+                                        Th(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(strings.docAmountTitle) }
                                     }
                                 }
                                 Tbody {
                                     Tr {
-                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.Bold).toAttrs()) { Text("TOTAL VENTES") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.Bold).toAttrs()) { Text(strings.docTotalSales) }
                                         Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.Bold).toAttrs()) { Text(formatFcfa(totalVentes)) }
                                     }
                                     Tr {
-                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("TOTAL VERSEMENT") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text(strings.docTotalDeposit) }
                                         Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalVersements)) }
                                     }
                                     Tr {
-                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("AVARIS (PERTE CASSE)") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text(strings.docSpoiledLoss) }
                                         Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalAvaries)) }
                                     }
                                     Tr {
-                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("DÉPENSES DU DÉPÔT") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text(strings.docExpenses) }
                                         Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalDepenses)) }
                                     }
                                     Tr {
-                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("DETTES / CRÉANCES") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text(strings.docClientDebts) }
                                         Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalDettes)) }
                                     }
                                     Tr(Modifier.backgroundColor(Color.rgb(0xFEF3C7)).toAttrs()) {
-                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.ExtraBold).toAttrs()) { Text("DIFFÉRENCE / ÉCART") }
+                                        Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.ExtraBold).toAttrs()) { Text(strings.docDiscrepancy) }
                                         Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.ExtraBold).toAttrs()) { Text(formatFcfa(difference)) }
                                     }
                                 }
@@ -247,22 +273,27 @@ fun ReportsPage() {
                                 .gap(0.6.cssRem)
                         ) {
                             Span(Modifier.fontSize(0.9.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                                Text("NOTE DE CONTRÔLE DE CAISSE")
+                                Text(strings.docControlNoteTitle)
                             }
                             Span(Modifier.fontSize(0.8.cssRem).toAttrs()) {
-                                Text("La différence correspond à : (Total Versements + Dépenses + Dettes) - Total Ventes.")
+                                Text("${strings.docDiscrepancy} : (${strings.docTotalDeposit} + ${strings.docExpenses} + ${strings.docClientDebts}) - ${strings.docTotalSales}.")
                             }
                             Span(Modifier.fontSize(0.8.cssRem).toAttrs()) {
-                                Text(if (difference >= 0) "Résultat conforme : les versements et charges couvrent l'intégralité des ventes." else "ATTENTION : Déficit constaté à justifier par le vendeur.")
+                                val noteText = when {
+                                    kotlin.math.abs(difference) < 1.0 -> strings.docControlNoteBalanced
+                                    difference > 0 -> strings.docControlNoteSurplus
+                                    else -> strings.docControlNoteDeficit
+                                }
+                                Text(noteText)
                             }
                             Spacer()
                             Row(Modifier.fillMaxWidth().padding(top = 1.cssRem)) {
                                 Column {
-                                    Span(Modifier.fontSize(0.8.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text("Visa Vendeur :") }
+                                    Span(Modifier.fontSize(0.8.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text("${strings.docSellerSignature} :") }
                                 }
                                 Spacer()
                                 Column {
-                                    Span(Modifier.fontSize(0.8.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text("Visa Responsable :") }
+                                    Span(Modifier.fontSize(0.8.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text("${strings.docManagerSignature} :") }
                                 }
                             }
                         }
@@ -272,7 +303,7 @@ fun ReportsPage() {
                 // Section 2: Detailed Inventory Table (Sheet 2 reproduction)
                 Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                     Span(Modifier.fontSize(1.05.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                        Text("DÉTAIL DES SORTIES DE STOCK ET DES VENTES")
+                        Text(strings.stockDetailTitle)
                     }
 
                     ResponsiveTableContainer(minWidth = 850.px) {
@@ -286,16 +317,16 @@ fun ReportsPage() {
                         ) {
                             Thead {
                                 Tr(Modifier.backgroundColor(Color.rgb(0xF3F4F6)).toAttrs()) {
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Start).toAttrs()) { Text("PRODUITS") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("STOCK INITIAL") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("ENTREES") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("TOTAL STOCK") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("RESTE STOCK") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("TOTAL SORTIES") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("BAR") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text("QT VENTES") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text("P.U (FCFA)") }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text("P. TOTAL") }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Start).toAttrs()) { Text(strings.colProducts) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colInitStock) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colEntries) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colTotalStock) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colRemainingTheoretical) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colTotalOutflows) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colBarOutflows) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colSalesQty) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(strings.colUnitPrice) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(strings.colTotalSalesPrice) }
                                 }
                             }
                             Tbody {
@@ -308,7 +339,7 @@ fun ReportsPage() {
                                             Text(r.entrees.fmt())
                                             if (r.entreesBonusBottles > 0) {
                                                 Span(Modifier.fontSize(0.68.cssRem).color(Color.rgb(0x16A34A)).display(DisplayStyle.Block).toAttrs()) {
-                                                    Text("(+${r.entreesBonusBottles} btl)")
+                                                    Text("(+${r.entreesBonusBottles} ${strings.bottlesAbbr})")
                                                 }
                                             }
                                         }
@@ -325,13 +356,13 @@ fun ReportsPage() {
                                 // Total Row
                                 val totalBonusInReport = rows.sumOf { it.entreesBonusBottles }
                                 Tr(Modifier.backgroundColor(Color.rgb(0xF3F4F6)).fontWeight(FontWeight.ExtraBold).toAttrs()) {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("TOTAL GÉNÉRAL") }
+                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("${strings.actions.uppercase()} / TOTAL") }
                                     Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.stockInitial }.fmt()) }
                                     Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
                                         Text(rows.sumOf { it.entrees }.fmt())
                                         if (totalBonusInReport > 0) {
                                             Span(Modifier.fontSize(0.68.cssRem).color(Color.rgb(0x16A34A)).display(DisplayStyle.Block).toAttrs()) {
-                                                Text("(+$totalBonusInReport btl)")
+                                                Text("(+$totalBonusInReport ${strings.bottlesAbbr})")
                                             }
                                         }
                                     }
@@ -352,7 +383,7 @@ fun ReportsPage() {
                 Row(Modifier.fillMaxWidth().padding(top = 2.cssRem)) {
                     Column(Modifier.gap(2.cssRem)) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                            Text("Signature du Vendeur :")
+                            Text("${strings.docSellerSignature} :")
                         }
                         Span(Modifier.fontSize(0.8.cssRem).color(Color.rgb(0x6B7280)).toAttrs()) {
                             Text("......................................................")
@@ -361,7 +392,7 @@ fun ReportsPage() {
                     Spacer()
                     Column(Modifier.gap(2.cssRem).textAlign(TextAlign.End)) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                            Text("Signature du Responsable de Dépôt :")
+                            Text("${strings.docManagerSignature} :")
                         }
                         Span(Modifier.fontSize(0.8.cssRem).color(Color.rgb(0x6B7280)).toAttrs()) {
                             Text("......................................................")

@@ -39,6 +39,7 @@ import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.localizeCategory
 import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
@@ -204,8 +205,8 @@ fun HomePage() {
                     )
 
                     QuickActionTile(
-                        title = "Transfert Bar",
-                        desc = "Sortie magasin vers le bar (hors vente)",
+                        title = strings.qaBarTransfer,
+                        desc = strings.qaBarTransferDesc,
                         icon = { FaWineGlass() },
                         color = Color.rgb(0x8B5CF6),
                         onClick = {
@@ -396,7 +397,7 @@ fun HomePage() {
                                                 }
                                             }
                                         }
-                                        Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) { Text(row.product.category) }
+                                        Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) { Text(strings.localizeCategory(row.product.category)) }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("${row.stockInitial} ${strings.crates}") }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) { Text("+${row.entrees}") }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).color(palette.danger).fontWeight(FontWeight.SemiBold).toAttrs()) { Text("-${row.totalSorties}") }
@@ -510,7 +511,7 @@ fun QuickSaleModal(
     val palette = ColorMode.current.toSitePalette()
     val strings = LocalLanguage.current.strings()
     ModalDialog(
-        title = if (destination == "Bar") "Enregistrer un Transfert vers le Bar" else strings.modalSaleTitle,
+        title = if (destination == "Bar") strings.noticeInternalTransferTitle else strings.modalSaleTitle,
         isOpen = isOpen,
         onClose = onClose
     ) {
@@ -523,13 +524,13 @@ fun QuickSaleModal(
                 ) {
                     StockRepository.products.forEach { p ->
                         Option(p.id, attrs = { if (p.id == selectedProductId) attr("selected", "") }) {
-                            Text("${p.name} \u2014 ${formatFcfa(p.unitPrice)}${if (p.supportsHalfCrate()) " [Demi-casier ok]" else ""}")
+                            Text("${p.name} \u2014 ${formatFcfa(p.unitPrice)}${if (p.supportsHalfCrate()) " ${strings.halfCrateOk}" else ""}")
                         }
                     }
                 }
             }
 
-            FormField(label = if (supportsHalfCrate) "${strings.fieldQty} (demi-casier autoris\u00e9 : 0.5, 1.5, 2.5...)" else strings.fieldQty) {
+            FormField(label = if (supportsHalfCrate) "${strings.fieldQty} (${strings.halfCrateOk} : 0.5, 1.5, 2.5...)" else strings.fieldQty) {
                 Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                     org.jetbrains.compose.web.dom.Input(
                         type = org.jetbrains.compose.web.attributes.InputType.Number,
@@ -550,7 +551,7 @@ fun QuickSaleModal(
                     if (supportsHalfCrate) {
                         Row(Modifier.fillMaxWidth().gap(0.35.cssRem).flexWrap(FlexWrap.Wrap), verticalAlignment = Alignment.CenterVertically) {
                             Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
-                                Text("Demi-casier :")
+                                Text(strings.labelHalfCrate)
                             }
                             listOf("0.5", "1", "1.5", "2", "3", "5").forEach { preset ->
                                 Button(
@@ -563,7 +564,7 @@ fun QuickSaleModal(
                                         .color(if (quantity == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                         .border(1.px, LineStyle.Solid, palette.cardBorder)
                                 ) {
-                                    Text("$preset cas.")
+                                    Text("$preset ${strings.cratesAbbr}")
                                 }
                             }
                             Button(
@@ -578,8 +579,8 @@ fun QuickSaleModal(
                                     .backgroundColor(palette.nearBackground)
                                     .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                     .border(1.px, LineStyle.Solid, palette.cardBorder)
-                            ) {
-                                Text("+0.5")
+                                ) {
+                                Text(strings.btnPlusHalfCrate)
                             }
                         }
                     }
@@ -603,7 +604,7 @@ fun QuickSaleModal(
                     }
                 ) {
                     Option("D\u00e9p\u00f4t", attrs = { if (destination == "D\u00e9p\u00f4t") attr("selected", "") }) { Text(strings.destDepot) }
-                    Option("Bar", attrs = { if (destination == "Bar") attr("selected", "") }) { Text("Bar (Transfert Interne)") }
+                    Option("Bar", attrs = { if (destination == "Bar") attr("selected", "") }) { Text("${strings.destBar} (${strings.paymentInternal})") }
                     Option("Client Gros", attrs = { if (destination == "Client Gros") attr("selected", "") }) { Text(strings.destWholesale) }
                 }
             }
@@ -621,17 +622,17 @@ fun QuickSaleModal(
                         FaWineGlass(Modifier.color(Color.rgb(0x7C3AED)).fontSize(1.cssRem))
                         Column(Modifier.gap(0.2.cssRem)) {
                             Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(Color.rgb(0x5B21B6)).toAttrs()) {
-                                Text("Transfert Bar \u2014 Mouvement Interne")
+                                Text(strings.noticeInternalTransferTitle)
                             }
                             Span(Modifier.fontSize(0.78.cssRem).color(Color.rgb(0x6D28D9)).toAttrs()) {
-                                Text("Cette sortie r\u00e9duit le stock magasin mais N'EST PAS incluse dans les ventes totales ni dans les recettes financi\u00e8res.")
+                                Text(strings.noticeInternalTransferDesc)
                             }
                         }
                     }
                 }
             }
 
-            FormField(label = if (destination == "Bar") "Service / R\u00e9ceptionnaire" else strings.fieldCustomer) {
+            FormField(label = if (destination == "Bar") strings.destBar else strings.fieldCustomer) {
                 AppTextInput(
                     value = customerName,
                     onValueChange = { customerName = it },
@@ -647,7 +648,7 @@ fun QuickSaleModal(
                     }
                 ) {
                     if (destination == "Bar") {
-                        Option("Transfert Interne", attrs = { attr("selected", "") }) { Text("Transfert Interne (Non Encaiss\u00e9)") }
+                        Option("Transfert Interne", attrs = { attr("selected", "") }) { Text(strings.paymentInternal) }
                     } else {
                         Option("Esp\u00e8ces", attrs = { if (paymentMethod == "Esp\u00e8ces") attr("selected", "") }) { Text(strings.paymentCash) }
                         Option("Mobile Money", attrs = { if (paymentMethod == "Mobile Money") attr("selected", "") }) { Text(strings.paymentMobile) }
@@ -737,13 +738,13 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                 ) {
                     StockRepository.products.forEach { p ->
                         Option(p.id, attrs = { if (p.id == selectedProductId) attr("selected", "") }) {
-                            Text("${p.name}${if (p.supportsHalfCrate()) " [Demi-casier ok]" else ""}")
+                            Text("${p.name}${if (p.supportsHalfCrate()) " ${strings.halfCrateOk}" else ""}")
                         }
                     }
                 }
             }
 
-            FormField(label = if (supportsHalfCrate) "${strings.fieldReceivedQty} (demi-casier autoris\u00e9 : 0.5, 1.5, 2.5...)" else strings.fieldReceivedQty) {
+            FormField(label = if (supportsHalfCrate) "${strings.fieldReceivedQty} (${strings.halfCrateOk} : 0.5, 1.5, 2.5...)" else strings.fieldReceivedQty) {
                 Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                     org.jetbrains.compose.web.dom.Input(
                         type = org.jetbrains.compose.web.attributes.InputType.Number,
@@ -764,7 +765,7 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                     if (supportsHalfCrate) {
                         Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
                             Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
-                                Text("Demi-casier :")
+                                Text(strings.labelHalfCrate)
                             }
                             listOf("0.5", "1", "5", "10", "20", "50").forEach { preset ->
                                 Button(
@@ -777,7 +778,7 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                                         .color(if (quantity == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                         .border(1.px, LineStyle.Solid, palette.cardBorder)
                                 ) {
-                                    Text("$preset cas.")
+                                    Text("$preset ${strings.cratesAbbr}")
                                 }
                             }
                             Button(
@@ -793,7 +794,7 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                                     .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                     .border(1.px, LineStyle.Solid, palette.cardBorder)
                             ) {
-                                Text("+0.5")
+                                Text(strings.btnPlusHalfCrate)
                             }
                         }
                     }
@@ -801,7 +802,7 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
             }
 
             // Extras: deliveries sometimes include two or three extra bottles per crate
-            FormField(label = "Bouteilles suppl\u00e9mentaires / Extras par casier (Livraison)") {
+            FormField(label = strings.fieldExtras) {
                 Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                     Select(
                         Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
@@ -809,9 +810,9 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                                 extrasPerCrate = it.value ?: "0"
                                 val v = it.value?.toIntOrNull() ?: 0
                                 if (v > 0) {
-                                    motif = "Surplus brasserie (+$v bout./casier offertes)"
+                                    motif = "Surplus brasserie (+$v ${strings.extrasBtlPerCrate})"
                                 } else if (v < 0) {
-                                    motif = "Casse au d\u00e9chargement ($v bout./casier manquantes)"
+                                    motif = "Casse au d\u00e9chargement ($v ${strings.extrasBtlPerCrate})"
                                 } else if (extrasPerCrate == "0") {
                                     motif = ""
                                 }
@@ -819,28 +820,28 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                         }
                     ) {
                         Option("0", attrs = { if (extrasPerCrate == "0") attr("selected", "") }) {
-                            Text("Aucun extra (livraison standard conforme)")
+                            Text(strings.extrasNone)
                         }
                         Option("2", attrs = { if (extrasPerCrate == "2") attr("selected", "") }) {
-                            Text("+2 bouteilles en plus par casier (Tr\u00e8s fr\u00e9quent brasserie)")
+                            Text(strings.extras2PerCrate)
                         }
                         Option("3", attrs = { if (extrasPerCrate == "3") attr("selected", "") }) {
-                            Text("+3 bouteilles en plus par casier (Tr\u00e8s fr\u00e9quent brasserie)")
+                            Text(strings.extras3PerCrate)
                         }
                         Option("1", attrs = { if (extrasPerCrate == "1") attr("selected", "") }) {
-                            Text("+1 bouteille en plus par casier")
+                            Text(strings.extras1PerCrate)
                         }
                         Option("-1", attrs = { if (extrasPerCrate == "-1") attr("selected", "") }) {
-                            Text("-1 bouteille manquante par casier (casse / avarie)")
+                            Text(strings.extrasMinus1PerCrate)
                         }
                         Option("-2", attrs = { if (extrasPerCrate == "-2") attr("selected", "") }) {
-                            Text("-2 bouteilles manquantes par casier (casse)")
+                            Text(strings.extrasMinus2PerCrate)
                         }
                         Option("-3", attrs = { if (extrasPerCrate == "-3") attr("selected", "") }) {
-                            Text("-3 bouteilles manquantes par casier (casse)")
+                            Text(strings.extrasMinus3PerCrate)
                         }
                         Option("custom", attrs = { if (extrasPerCrate == "custom") attr("selected", "") }) {
-                            Text("Autre quantit\u00e9 totale de bouteilles extras / manquantes...")
+                            Text(strings.extrasCustom)
                         }
                     }
 
@@ -848,7 +849,7 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                         AppTextInput(
                             value = customExtras,
                             onValueChange = { customExtras = it },
-                            placeholderText = "Nombre total de bouteilles suppl\u00e9mentaires (ex: 15)",
+                            placeholderText = "15",
                             type = "number",
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -865,13 +866,13 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
                             Column(Modifier.gap(0.2.cssRem)) {
                                 val sign = if (isPositive) "+" else ""
                                 Span(Modifier.fontSize(0.85.cssRem).color(alertColor).fontWeight(FontWeight.Bold).toAttrs()) {
-                                    Text(if (isPositive) "\u2713 Bonus de livraison enregistr\u00e9 :" else "\u26a0\ufe0f Manquant de livraison constat\u00e9 :")
+                                    Text(if (isPositive) "\u2713 ${strings.statBonusReceived} :" else "\u26a0\ufe0f ${strings.colExtrasGaps} :")
                                 }
                                 Span(Modifier.fontSize(0.8.cssRem).color(alertColor).toAttrs()) {
                                     if (extrasPerCrate != "custom") {
-                                        Text("$sign$extrasInt btl/casier \u00d7 $qtyDouble casiers = $sign$totalBonusBottles bouteilles au total ($sign$bonusCratesEquiv casier \u00e9quiv.)")
+                                        Text("$sign$extrasInt ${strings.extrasBtlPerCrate} \u00d7 $qtyDouble ${strings.crates} = $sign$totalBonusBottles ${strings.bottles} ($sign$bonusCratesEquiv ${strings.cratesAbbr})")
                                     } else {
-                                        Text("$sign$totalBonusBottles bouteilles au total ($sign$bonusCratesEquiv casier \u00e9quiv.)")
+                                        Text("$sign$totalBonusBottles ${strings.bottles} ($sign$bonusCratesEquiv ${strings.cratesAbbr})")
                                     }
                                 }
                             }
@@ -881,11 +882,10 @@ fun QuickEntryModal(isOpen: Boolean, onClose: () -> Unit) {
             }
 
             if (totalBonusBottles != 0) {
-                FormField(label = "Motif de l'\u00e9cart / bonus (obligatoire)") {
+                FormField(label = strings.notes) {
                     AppTextInput(
                         value = motif,
                         onValueChange = { motif = it },
-                        placeholderText = "Ex: 2 bouteilles offertes par casier par la brasserie",
                         type = "text",
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1071,7 +1071,7 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
                 }
             }
 
-            FormField(label = if (supportsHalfCrate) "${strings.fieldCratesOwed} (demi-casier autorisé : 0.5, 1.5...)" else strings.fieldCratesOwed) {
+            FormField(label = if (supportsHalfCrate) "${strings.fieldCratesOwed} (${strings.halfCrateOk} : 0.5, 1.5...)" else strings.fieldCratesOwed) {
                 Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                     org.jetbrains.compose.web.dom.Input(
                         type = org.jetbrains.compose.web.attributes.InputType.Number,
@@ -1090,6 +1090,9 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
                     )
                     if (supportsHalfCrate) {
                         Row(Modifier.fillMaxWidth().gap(0.35.cssRem), verticalAlignment = Alignment.CenterVertically) {
+                            Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
+                                Text(strings.labelHalfCrate)
+                            }
                             listOf("0.5", "1", "1.5", "2", "3", "5").forEach { preset ->
                                 Button(
                                     onClick = { quantityCrates = preset },
@@ -1101,7 +1104,7 @@ fun QuickDebtModal(isOpen: Boolean, onClose: () -> Unit) {
                                         .color(if (quantityCrates == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                         .border(1.px, LineStyle.Solid, palette.cardBorder)
                                 ) {
-                                    Text("$preset cas.")
+                                    Text("$preset ${strings.cratesAbbr}")
                                 }
                             }
                         }
@@ -1209,11 +1212,11 @@ fun QuickExpenseModal(isOpen: Boolean, onClose: () -> Unit) {
                         onChange { category = it.value ?: "Manutention" }
                     }
                 ) {
-                    Option("Manutention") { Text("Manutention / Déchargement") }
-                    Option("Transport") { Text("Transport & Logistique") }
-                    Option("Factures") { Text("Factures (Électricité / Eau / Glace)") }
-                    Option("Personnel") { Text("Personnel & Rations") }
-                    Option("Divers") { Text("Charges Diverses") }
+                    Option("Manutention") { Text(strings.catHandling) }
+                    Option("Transport") { Text(strings.catTransport) }
+                    Option("Factures") { Text(strings.catBills) }
+                    Option("Personnel") { Text(strings.catStaff) }
+                    Option("Divers") { Text(strings.catMisc) }
                 }
             }
 
@@ -1227,7 +1230,7 @@ fun QuickExpenseModal(isOpen: Boolean, onClose: () -> Unit) {
                 )
             }
 
-            FormField(label = "Bénéficiaire (Optionnel)") {
+            FormField(label = strings.fieldBeneficiary) {
                 AppTextInput(
                     value = beneficiary,
                     onValueChange = { beneficiary = it },
@@ -1272,7 +1275,7 @@ fun StockAuditQuickModal(isOpen: Boolean, onClose: () -> Unit) {
     ModalDialog(title = strings.modalAuditTitle, isOpen = isOpen, onClose = onClose, maxWidth = 55.cssRem) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
             Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                Text("Vue globale du stock théorique calculé vs stock physique compté.")
+                Text(strings.modalAuditSubtitle)
             }
 
             ResponsiveTableContainer(minWidth = 620.px, modifier = Modifier.maxHeight(50.vh)) {

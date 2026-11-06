@@ -29,12 +29,15 @@ import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.localizeCategory
 import org.app.tgvstock.models.Product
 import org.app.tgvstock.models.supportsHalfCrate
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
@@ -47,6 +50,7 @@ fun initProductsPage(ctx: InitRouteContext) {
 @Composable
 fun ProductsPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Tous") }
@@ -55,7 +59,16 @@ fun ProductsPage() {
     var productToEdit by remember { mutableStateOf<Product?>(null) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
 
-    val categories = listOf("Tous", "Bières", "Guinness", "Gazeuses", "Canettes", "Alcopops", "Eaux", "Non-Alcoolisé")
+    val categories = listOf(
+        "Tous" to strings.prodCatAll,
+        "Bières" to strings.prodCatBeers,
+        "Guinness" to strings.prodCatGuinness,
+        "Gazeuses" to strings.prodCatSodas,
+        "Canettes" to strings.prodCatCans,
+        "Alcopops" to strings.prodCatAlcopops,
+        "Eaux" to strings.prodCatWaters,
+        "Non-Alcoolisé" to strings.prodCatNonAlcoholic
+    )
     val products = StockRepository.products
 
     val filteredProducts = products.filter { p ->
@@ -70,16 +83,16 @@ fun ProductsPage() {
         Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                    Text("Catalogue & CRUD Produits")
+                    Text(strings.productsPageTitle)
                 }
                 Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("${products.size} produits référencés dans le dépôt. Ajoutez, modifiez ou ajustez les prix unitaires.")
+                    Text("${products.size} ${strings.productsPageSubtitle}")
                 }
             }
 
             Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
-                    text = "Ajouter un Produit",
+                    text = strings.btnAddProduct,
                     onClick = { showAddModal = true },
                     icon = { FaPlus() },
                     backgroundColor = palette.brand.primary
@@ -101,10 +114,10 @@ fun ProductsPage() {
                             property("white-space", "nowrap")
                         }
                 ) {
-                    categories.forEach { cat ->
-                        val isSelected = selectedCategory == cat
+                    categories.forEach { (catKey, catLabel) ->
+                        val isSelected = selectedCategory == catKey
                         Button(
-                            onClick = { selectedCategory = cat },
+                            onClick = { selectedCategory = catKey },
                             Modifier
                                 .fontSize(0.85.cssRem)
                                 .padding(leftRight = 0.8.cssRem, topBottom = 0.4.cssRem)
@@ -113,7 +126,7 @@ fun ProductsPage() {
                                 .color(if (isSelected) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                 .border(1.px, LineStyle.Solid, if (isSelected) palette.brand.primary else palette.cardBorder)
                         ) {
-                            Text(cat)
+                            Text(catLabel)
                         }
                     }
                 }
@@ -122,7 +135,7 @@ fun ProductsPage() {
                 AppTextInput(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholderText = "Rechercher un produit...",
+                    placeholderText = strings.placeholderSearchProducts,
                     type = "search",
                     modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
@@ -147,21 +160,21 @@ fun ProductsPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("NOM DU PRODUIT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("CATÉGORIE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("BOUTEILLES / CASIER") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("PRIX UNITAIRE (PU)") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("STOCK INITIAL") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("CONSIGNATION CASIER") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("DEMI-CASIER") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTIONS") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProdName) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colProdCategory) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colProdBottlesPerCrate) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colProdUnitPrice) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colProdStock) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.pkgDepositValue) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colProdHalfCrate) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.actions) }
                             }
                         }
                         Tbody {
                             if (filteredProducts.isEmpty()) {
                                 Tr {
                                     Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "8") }) {
-                                        Text("Aucun produit trouvé.")
+                                        Text(strings.noProductsFound)
                                     }
                                 }
                             } else {
@@ -193,17 +206,17 @@ fun ProductsPage() {
                                                     .fontSize(0.8.cssRem)
                                                     .display(DisplayStyle.InlineBlock)
                                             ) {
-                                                Text(p.category)
+                                                Text(strings.localizeCategory(p.category))
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
-                                            Text("${p.bottlesPerCrate} btls")
+                                            Text("${p.bottlesPerCrate} ${strings.bottlesAbbr}")
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).fontWeight(FontWeight.Bold).color(palette.brand.primary).toAttrs()) {
                                             Text(formatFcfa(p.unitPrice))
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
-                                            Text("${p.stockInitial} casiers")
+                                            Text("${p.stockInitial} ${strings.crates}")
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).color(palette.textMuted).toAttrs()) {
                                             Text(formatFcfa(p.consignationPrice))
@@ -220,7 +233,7 @@ fun ProductsPage() {
                                                         .fontWeight(FontWeight.Bold)
                                                         .display(DisplayStyle.InlineBlock)
                                                 ) {
-                                                    Text("\u2713 Oui")
+                                                    Text("✓ ${strings.yes}")
                                                 }
                                             } else {
                                                 Box(
@@ -232,7 +245,7 @@ fun ProductsPage() {
                                                         .fontSize(0.78.cssRem)
                                                         .display(DisplayStyle.InlineBlock)
                                                 ) {
-                                                    Text("Non")
+                                                    Text(strings.no)
                                                 }
                                             }
                                         }
@@ -265,7 +278,7 @@ fun ProductsPage() {
     // Modal: Ajouter Produit
     if (showAddModal) {
         ProductFormModal(
-            title = "Ajouter un Nouveau Produit",
+            title = strings.modalAddProductTitle,
             initialProduct = null,
             isOpen = true,
             onClose = { showAddModal = false },
@@ -279,7 +292,7 @@ fun ProductsPage() {
     // Modal: Modifier Produit
     productToEdit?.let { p ->
         ProductFormModal(
-            title = "Modifier le Produit : ${p.name}",
+            title = "${strings.modalEditProductTitle} : ${p.name}",
             initialProduct = p,
             isOpen = true,
             onClose = { productToEdit = null },
@@ -299,19 +312,19 @@ fun ProductsPage() {
     // Modal: Confirmer Suppression
     productToDelete?.let { p ->
         ModalDialog(
-            title = "Supprimer le Produit ?",
+            title = strings.modalDeleteProductTitle,
             isOpen = true,
             onClose = { productToDelete = null }
         ) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
                 Span(Modifier.toAttrs()) {
-                    Text("Êtes-vous sûr de vouloir supprimer ${p.name} ? Cette action est irréversible.")
+                    Text("${strings.deleteProductConfirmMsg} (${p.name})")
                 }
                 Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
-                    AppSecondaryButton(text = "Annuler", onClick = { productToDelete = null })
+                    AppSecondaryButton(text = strings.cancel, onClick = { productToDelete = null })
                     AppButton(
-                        text = "Supprimer définitivement",
+                        text = strings.delete,
                         onClick = {
                             StockRepository.deleteProduct(p.id)
                             productToDelete = null
@@ -333,6 +346,7 @@ fun ProductFormModal(
     onClose: () -> Unit,
     onSave: (name: String, pu: Double, bottlesPerCrate: Int, category: String, stockInitial: Int, consignation: Double) -> Unit
 ) {
+    val strings = LocalLanguage.current.strings()
     var name by remember { mutableStateOf(initialProduct?.name ?: "") }
     var unitPrice by remember { mutableStateOf(initialProduct?.unitPrice?.toString() ?: "9500") }
     var bottlesPerCrate by remember { mutableStateOf(initialProduct?.bottlesPerCrate?.toString() ?: "12") }
@@ -348,7 +362,7 @@ fun ProductFormModal(
 
     ModalDialog(title = title, isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
-            FormField(label = "Nom du Produit") {
+            FormField(label = strings.fieldProdName) {
                 AppTextInput(
                     value = name,
                     onValueChange = { name = it },
@@ -358,7 +372,7 @@ fun ProductFormModal(
                 )
             }
 
-            FormField(label = "Prix Unitaire (PU) par Casier / Carton (FCFA)") {
+            FormField(label = strings.fieldProdUnitPrice) {
                 AppTextInput(
                     value = unitPrice,
                     onValueChange = { unitPrice = it },
@@ -369,7 +383,7 @@ fun ProductFormModal(
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem)) {
                 Box(Modifier.weight(1f)) {
-                    FormField(label = "Bouteilles par Casier") {
+                    FormField(label = strings.fieldProdBottlesPerCrate) {
                         AppTextInput(
                             value = bottlesPerCrate,
                             onValueChange = { bottlesPerCrate = it },
@@ -379,14 +393,14 @@ fun ProductFormModal(
                     }
                 }
                 Box(Modifier.weight(1f)) {
-                    FormField(label = "Catégorie") {
+                    FormField(label = strings.fieldProdCategory) {
                         Select(
                             Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
                                 onChange { category = it.value ?: "Bières" }
                             }
                         ) {
                             listOf("Bières", "Guinness", "Gazeuses", "Canettes", "Alcopops", "Eaux", "Non-Alcoolisé").forEach { cat ->
-                                Option(cat, attrs = { if (cat == category) attr("selected", "") }) { Text(cat) }
+                                Option(cat, attrs = { if (cat == category) attr("selected", "") }) { Text(strings.localizeCategory(cat)) }
                             }
                         }
                     }
@@ -395,7 +409,7 @@ fun ProductFormModal(
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem)) {
                 Box(Modifier.weight(1f)) {
-                    FormField(label = if (categorySupportsHalfCrate) "Stock Initial (Casiers) — demi-casier autorisé : 0.5, 1.5..." else "Stock Initial (Casiers)") {
+                    FormField(label = if (categorySupportsHalfCrate) "${strings.fieldProdInitialStock} — ${strings.halfCrateOk} (0.5, 1.5...)" else strings.fieldProdInitialStock) {
                         Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                             org.jetbrains.compose.web.dom.Input(
                                 type = org.jetbrains.compose.web.attributes.InputType.Number,
@@ -415,7 +429,7 @@ fun ProductFormModal(
                             if (categorySupportsHalfCrate) {
                                 Row(Modifier.fillMaxWidth().gap(0.35.cssRem).flexWrap(FlexWrap.Wrap), verticalAlignment = Alignment.CenterVertically) {
                                     Span(Modifier.fontSize(0.75.cssRem).color(palette.brand.primary).fontWeight(FontWeight.SemiBold).toAttrs()) {
-                                        Text("Demi-casier :")
+                                        Text(strings.labelHalfCrate)
                                     }
                                     listOf("0.5", "1", "1.5", "2", "3", "5", "10").forEach { preset ->
                                         Button(
@@ -428,7 +442,7 @@ fun ProductFormModal(
                                                 .color(if (stockInitial == preset) Colors.Black else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                                 .border(1.px, LineStyle.Solid, palette.cardBorder)
                                         ) {
-                                            Text("$preset cas.")
+                                            Text("$preset ${strings.cratesAbbr}")
                                         }
                                     }
                                     Button(
@@ -444,7 +458,7 @@ fun ProductFormModal(
                                             .color(if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                             .border(1.px, LineStyle.Solid, palette.cardBorder)
                                     ) {
-                                        Text("+0.5")
+                                        Text(strings.btnPlusHalfCrate)
                                     }
                                 }
                             }
@@ -452,7 +466,7 @@ fun ProductFormModal(
                     }
                 }
                 Box(Modifier.weight(1f)) {
-                    FormField(label = "Prix Consignation Casier (FCFA)") {
+                    FormField(label = strings.pkgDepositValue) {
                         AppTextInput(
                             value = consignationPrice,
                             onValueChange = { consignationPrice = it },
@@ -465,9 +479,9 @@ fun ProductFormModal(
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = if (initialProduct == null) "Ajouter le Produit" else "Enregistrer les Modifications",
+                    text = strings.btnSaveProduct,
                     onClick = {
                         val puVal = unitPrice.toDoubleOrNull() ?: 0.0
                         val bpcVal = bottlesPerCrate.toIntOrNull() ?: 12

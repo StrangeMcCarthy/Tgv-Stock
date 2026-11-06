@@ -2,6 +2,7 @@ package org.app.tgvstock.components.sections
 
 import androidx.compose.runtime.*
 import com.varabyte.kobweb.compose.css.FontWeight
+import com.varabyte.kobweb.compose.css.ObjectFit
 import com.varabyte.kobweb.compose.css.functions.clamp
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.*
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.rememberPageContext
+import com.varabyte.kobweb.silk.components.graphics.Image
 import com.varabyte.kobweb.silk.components.icons.CloseIcon
 import com.varabyte.kobweb.silk.components.icons.HamburgerIcon
 import com.varabyte.kobweb.silk.components.icons.MoonIcon
@@ -179,11 +181,17 @@ fun NavHeader() {
                         .size(2.4.cssRem)
                         .borderRadius(8.px)
                         .backgroundColor(palette.brand.primary)
-                        .color(Colors.Black)
-                        .fontSize(1.2.cssRem),
+                        .padding(2.px),
                     contentAlignment = Alignment.Center
                 ) {
-                    FaBeerMugEmpty()
+                    Image(
+                        src = "/favicon.ico",
+                        description = "TGV Stock Logo",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .borderRadius(6.px)
+                            .objectFit(ObjectFit.Contain)
+                    )
                 }
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {

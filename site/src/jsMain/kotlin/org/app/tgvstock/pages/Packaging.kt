@@ -30,37 +30,40 @@ import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
+import org.app.tgvstock.Strings
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
 import org.app.tgvstock.models.Packaging
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 // ─── Movement type metadata ────────────────────────────────────────────────
 
 data class MovementTypeInfo(
     val key: String,
-    val label: String,
-    val shortLabel: String,
+    val label: (Strings) -> String,
+    val shortLabel: (Strings) -> String,
     val deltaEmptySign: Int,  // +1 = increases empty, -1 = decreases, 0 = no effect
     val deltaFullSign: Int,
     val color: Color,
-    val description: String
+    val description: (Strings) -> String
 )
 
 val packagingMovementTypes = listOf(
-    MovementTypeInfo("RECEPTION_PLEIN",    "Réception casiers pleins",      "Réception",    0, +1, Color.rgb(0x16A34A), "Livraison de casiers pleins depuis la brasserie ou fournisseur"),
-    MovementTypeInfo("RETOUR_VIDE_CLIENT", "Retour vides d'un client",      "Retour client",+1,  0, Color.rgb(0x2563EB), "Un client rapporte des casiers vides consignés"),
-    MovementTypeInfo("RETOUR_BRASSERIE",   "Envoi vides à la brasserie",    "→ Brasserie",  -1,  0, Color.rgb(0x7C3AED), "Expédition de casiers vides à la brasserie pour remboursement de consignation"),
-    MovementTypeInfo("VENTE_CASIER_VIDE",  "Vente casiers vides à un tiers","Vente vides",  -1,  0, Color.rgb(0xEA580C), "Vente directe de casiers vides à un client ou tiers"),
-    MovementTypeInfo("CONVERSION",         "Conversion pleins → vides",     "Conversion",   +1, -1, Color.rgb(0x0D9488), "Casiers débouchés / distribués : plein devient vide"),
-    MovementTypeInfo("AJUSTEMENT_VIDE",    "Ajustement manuel vides",       "Ajust. vides", +1,  0, Color.rgb(0x92400E), "Correction manuelle du comptage des casiers vides"),
-    MovementTypeInfo("AJUSTEMENT_PLEIN",   "Ajustement manuel pleins",      "Ajust. pleins", 0, +1, Color.rgb(0x1D4ED8), "Correction manuelle du comptage des casiers pleins")
+    MovementTypeInfo("RECEPTION_PLEIN",    { it.movReceptionPlein },    { it.movReceptionPleinShort },    0, +1, Color.rgb(0x16A34A), { it.movReceptionPleinDesc }),
+    MovementTypeInfo("RETOUR_VIDE_CLIENT", { it.movRetourVideClient }, { it.movRetourVideClientShort }, +1,  0, Color.rgb(0x2563EB), { it.movRetourVideClientDesc }),
+    MovementTypeInfo("RETOUR_BRASSERIE",   { it.movRetourBrasserie },   { it.movRetourBrasserieShort },  -1,  0, Color.rgb(0x7C3AED), { it.movRetourBrasserieDesc }),
+    MovementTypeInfo("VENTE_CASIER_VIDE",  { it.movVenteCasierVide },  { it.movVenteCasierVideShort },  -1,  0, Color.rgb(0xEA580C), { it.movVenteCasierVideDesc }),
+    MovementTypeInfo("CONVERSION",         { it.movConversion },        { it.movConversionShort },       +1, -1, Color.rgb(0x0D9488), { it.movConversionDesc }),
+    MovementTypeInfo("AJUSTEMENT_VIDE",    { it.movAjustementVide },    { it.movAjustementVideShort },   +1,  0, Color.rgb(0x92400E), { it.movAjustementVideDesc }),
+    MovementTypeInfo("AJUSTEMENT_PLEIN",   { it.movAjustementPlein },   { it.movAjustementPleinShort },   0, +1, Color.rgb(0x1D4ED8), { it.movAjustementPleinDesc })
 )
 
 fun movementTypeInfo(key: String) = packagingMovementTypes.find { it.key == key }
-    ?: MovementTypeInfo(key, key, key, 0, 0, Color.rgb(0x6B7280), "")
+    ?: MovementTypeInfo(key, { key }, { key }, 0, 0, Color.rgb(0x6B7280), { "" })
 
 // ─── Page ──────────────────────────────────────────────────────────────────
 
@@ -74,6 +77,7 @@ fun initPackagingPage(ctx: InitRouteContext) {
 @Composable
 fun PackagingPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
 
     var showAddModal by remember { mutableStateOf(false) }
     var packagingToEdit by remember { mutableStateOf<Packaging?>(null) }
@@ -101,22 +105,22 @@ fun PackagingPage() {
         Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                    Text("Gestion des Emballages (Casiers & Bouteilles)")
+                    Text(strings.pkgPageTitle)
                 }
                 Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Suivi complet du parc d'emballages : réceptions, retours clients, envois brasserie et consignations.")
+                    Text(strings.pkgPageSubtitle)
                 }
             }
 
             Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
-                    text = "Nouveau Mouvement",
+                    text = strings.btnNewPkgMovement,
                     onClick = { movementTargetPkg = null; showMovementModal = true },
                     icon = { FaArrowRightArrowLeft() },
                     backgroundColor = Color.rgb(0x0D9488)
                 )
                 AppButton(
-                    text = "Ajouter un Emballage",
+                    text = strings.btnAddPackaging,
                     onClick = { showAddModal = true },
                     icon = { FaPlus() },
                     backgroundColor = palette.brand.primary
@@ -134,41 +138,41 @@ fun PackagingPage() {
                 .toAttrs()
         ) {
             StatCard(
-                title = "Casiers Vides",
-                value = "$totalEmpty casiers",
-                subtitle = "Prêts pour retour ou consignation",
+                title = strings.pkgEmptyCrates,
+                value = "$totalEmpty ${strings.crates}",
+                subtitle = strings.pkgEmptyCratesSub,
                 icon = { FaBoxOpen() },
                 accentColor = Color.rgb(0x06B6D4)
             )
 
             StatCard(
-                title = "Casiers Pleins",
-                value = "$totalFull casiers",
-                subtitle = "Disponibles en dépôt pour la vente",
+                title = strings.pkgFullCrates,
+                value = "$totalFull ${strings.crates}",
+                subtitle = strings.pkgFullCratesSub,
                 icon = { FaBoxArchive() },
                 accentColor = palette.brand.primary
             )
 
             StatCard(
-                title = "Parc Total",
-                value = "$totalCrates casiers",
-                subtitle = "Casiers vides + casiers pleins",
+                title = strings.pkgTotalCrates,
+                value = "$totalCrates ${strings.crates}",
+                subtitle = strings.pkgTotalCratesSub,
                 icon = { FaBoxesStacked() },
                 accentColor = palette.success
             )
 
             StatCard(
-                title = "Valeur Consignation",
+                title = strings.pkgDepositValue,
                 value = formatFcfa(totalDeposit),
-                subtitle = "Capital immobilisé en emballages",
+                subtitle = strings.pkgDepositValueSub,
                 icon = { FaCoins() },
                 accentColor = Color.rgb(0xEAB308)
             )
 
             StatCard(
-                title = "Mouvements Aujourd'hui",
-                value = "$totalMovementsToday opérations",
-                subtitle = "${movements.size} mouvements au total",
+                title = strings.pkgMovementsToday,
+                value = "$totalMovementsToday",
+                subtitle = "${movements.size} ${strings.pkgMovementsTodaySub}",
                 icon = { FaArrowRightArrowLeft() },
                 accentColor = Color.rgb(0x7C3AED)
             )
@@ -180,10 +184,10 @@ fun PackagingPage() {
                 Div(FilterBarStyle.toAttrs()) {
                     Column(Modifier.gap(0.2.cssRem)) {
                         Span(Modifier.fontSize(1.1.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                            Text("Parc d'Emballages")
+                            Text(strings.pkgStockTitle)
                         }
                         Span(Modifier.fontSize(0.82.cssRem).color(palette.textMuted).toAttrs()) {
-                            Text("Utilisez ± pour ajuster manuellement ou \"Mouvement\" pour un enregistrement tracé.")
+                            Text(strings.pkgStockSubtitle)
                         }
                     }
                     if (historyFilterId != null) {
@@ -194,7 +198,7 @@ fun PackagingPage() {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {
                                 FaXmark()
-                                Text("Afficher tous les mouvements")
+                                Text(strings.filterAllBrands)
                             }
                         }
                     }
@@ -215,22 +219,22 @@ fun PackagingPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text("LIBELLÉ EMBALLAGE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text("FORMAT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text("CASIERS VIDES") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text("CASIERS PLEINS") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text("TOTAL") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.End).toAttrs()) { Text("CONSIGNATION / CASIER") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.End).toAttrs()) { Text("VALEUR TOTALE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text("MÀJ") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text("ACTIONS") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text(strings.colPkgBrand) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text(strings.colPkgType) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colPkgEmpty) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colPkgFull) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colPkgTotal) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.End).toAttrs()) { Text(strings.colPkgUnitDeposit) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.End).toAttrs()) { Text(strings.colPkgTotalDeposit) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text(strings.date) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text(strings.actions) }
                             }
                         }
                         Tbody {
                             if (packagingList.isEmpty()) {
                                 Tr {
                                     Td(Modifier.padding(2.cssRem).textAlign(TextAlign.Center).toAttrs { attr("colspan", "9") }) {
-                                        Text("Aucun emballage enregistré.")
+                                        Text(strings.noPackagingRecorded)
                                     }
                                 }
                             } else {
@@ -388,7 +392,7 @@ fun PackagingPage() {
                     Column(Modifier.gap(0.2.cssRem)) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.5.cssRem)) {
                             Span(Modifier.fontSize(1.1.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
-                                Text("Historique des Mouvements")
+                                Text(strings.pkgHistoryTitle)
                             }
                             if (historyFilterId != null) {
                                 val name = packagingList.find { it.id == historyFilterId }?.name ?: ""
@@ -401,12 +405,12 @@ fun PackagingPage() {
                                         .fontSize(0.75.cssRem)
                                         .fontWeight(FontWeight.Bold)
                                 ) {
-                                    Text("Filtré : $name")
+                                    Text("${strings.filterBrandLabel} $name")
                                 }
                             }
                         }
                         Span(Modifier.fontSize(0.82.cssRem).color(palette.textMuted).toAttrs()) {
-                            Text("${filteredMovements.size} mouvement(s) enregistré(s)${if (historyFilterId != null) " pour cet emballage" else " au total"}.")
+                            Text(strings.pkgHistorySubtitle)
                         }
                     }
                 }
@@ -423,7 +427,7 @@ fun PackagingPage() {
                         Column(Modifier.gap(0.5.cssRem), horizontalAlignment = Alignment.CenterHorizontally) {
                             FaArrowRightArrowLeft(Modifier.fontSize(2.cssRem).color(palette.textMuted))
                             Span(Modifier.color(palette.textMuted).fontSize(0.9.cssRem).toAttrs()) {
-                                Text("Aucun mouvement enregistré. Cliquez sur \"Nouveau Mouvement\" pour commencer.")
+                                Text(strings.noMovementsRecorded)
                             }
                         }
                     }
@@ -443,13 +447,13 @@ fun PackagingPage() {
                                         .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                         .toAttrs()
                                 ) {
-                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text("DATE") }
-                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text("EMBALLAGE") }
-                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text("TYPE DE MOUVEMENT") }
-                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text("Δ VIDES") }
-                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text("Δ PLEINS") }
-                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text("CONTACT") }
-                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text("NOTES") }
+                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text(strings.colMovDate) }
+                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text(strings.colMovBrand) }
+                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text(strings.colMovType) }
+                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colMovEmptyDelta) }
+                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colMovFullDelta) }
+                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text(strings.colMovActor) }
+                                    Th(Modifier.padding(0.65.cssRem).textAlign(TextAlign.Start).toAttrs()) { Text(strings.notes) }
                                 }
                             }
                             Tbody {
@@ -476,7 +480,7 @@ fun PackagingPage() {
                                                     .fontWeight(FontWeight.SemiBold)
                                                     .fontSize(0.78.cssRem)
                                             ) {
-                                                Text(info.shortLabel)
+                                                Text(info.shortLabel(strings))
                                             }
                                         }
                                         // Delta empty
@@ -531,7 +535,7 @@ fun PackagingPage() {
     // ── Modal: Ajouter Emballage ──────────────────────────────────────────
     if (showAddModal) {
         PackagingFormModal(
-            title = "Ajouter un Type d'Emballage",
+            title = strings.modalAddPkgTitle,
             initial = null,
             isOpen = true,
             onClose = { showAddModal = false },
@@ -545,7 +549,7 @@ fun PackagingPage() {
     // ── Modal: Modifier Emballage ──────────────────────────────────────────
     packagingToEdit?.let { pkg ->
         PackagingFormModal(
-            title = "Modifier l'Emballage : ${pkg.name}",
+            title = "${strings.modalEditPkgTitle} : ${pkg.name}",
             initial = pkg,
             isOpen = true,
             onClose = { packagingToEdit = null },
@@ -564,19 +568,19 @@ fun PackagingPage() {
     // ── Modal: Supprimer Emballage ─────────────────────────────────────────
     packagingToDelete?.let { pkg ->
         ModalDialog(
-            title = "Supprimer cet Emballage ?",
+            title = strings.modalDeletePkgTitle,
             isOpen = true,
             onClose = { packagingToDelete = null }
         ) {
             Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
                 Span(Modifier.toAttrs()) {
-                    Text("Êtes-vous sûr de vouloir supprimer \"${pkg.name}\" et tout son historique de mouvements ?")
+                    Text(strings.confirmDeletePkgMsg)
                 }
                 Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                     Spacer()
-                    AppSecondaryButton(text = "Annuler", onClick = { packagingToDelete = null })
+                    AppSecondaryButton(text = strings.cancel, onClick = { packagingToDelete = null })
                     AppButton(
-                        text = "Supprimer",
+                        text = strings.delete,
                         onClick = {
                             StockRepository.deletePackaging(pkg.id)
                             packagingToDelete = null
@@ -598,6 +602,7 @@ fun PackagingMovementModal(
     initialPackagingId: String?,
     onClose: () -> Unit
 ) {
+    val strings = LocalLanguage.current.strings()
     val packagingList = StockRepository.packaging
     var selectedPkgId by remember { mutableStateOf(initialPackagingId ?: packagingList.firstOrNull()?.id ?: "") }
     var movementType by remember { mutableStateOf("RECEPTION_PLEIN") }
@@ -611,11 +616,11 @@ fun PackagingMovementModal(
     val deltaEmpty = info.deltaEmptySign * qty
     val deltaFull = info.deltaFullSign * qty
 
-    ModalDialog(title = "Enregistrer un Mouvement d'Emballages", isOpen = isOpen, onClose = onClose, maxWidth = 34.cssRem) {
+    ModalDialog(title = strings.modalMovTitle, isOpen = isOpen, onClose = onClose, maxWidth = 34.cssRem) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
 
             // Packaging selector
-            FormField(label = "Emballage concerné") {
+            FormField(label = strings.fieldMovTargetPkg) {
                 Select(
                     Modifier.fillMaxWidth().padding(0.5.cssRem).borderRadius(8.px).toAttrs {
                         onChange { selectedPkgId = it.value ?: "" }
@@ -630,7 +635,7 @@ fun PackagingMovementModal(
             }
 
             // Movement type selector
-            FormField(label = "Type de mouvement") {
+            FormField(label = strings.fieldMovType) {
                 Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                     packagingMovementTypes.chunked(2).forEach { pair ->
                         Row(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
@@ -648,7 +653,7 @@ fun PackagingMovementModal(
                                         .color(if (isSelected) typeInfo.color else ColorMode.current.toSitePalette().textMuted)
                                         .fontWeight(if (isSelected) FontWeight.Bold else FontWeight.Normal)
                                 ) {
-                                    Text(typeInfo.label)
+                                    Text(typeInfo.label(strings))
                                 }
                             }
                         }
@@ -657,7 +662,7 @@ fun PackagingMovementModal(
             }
 
             // Quantity
-            FormField(label = "Quantité de casiers") {
+            FormField(label = strings.fieldMovQuantity) {
                 AppTextInput(
                     value = quantity,
                     onValueChange = { quantity = it },
@@ -667,7 +672,7 @@ fun PackagingMovementModal(
             }
 
             // Contact
-            FormField(label = "Client / Fournisseur (optionnel)") {
+            FormField(label = strings.fieldMovActor) {
                 AppTextInput(
                     value = contactName,
                     onValueChange = { contactName = it },
@@ -678,7 +683,7 @@ fun PackagingMovementModal(
             }
 
             // Notes
-            FormField(label = "Notes / Observations (optionnel)") {
+            FormField(label = strings.fieldMovMotif) {
                 AppTextInput(
                     value = notes,
                     onValueChange = { notes = it },
@@ -700,11 +705,11 @@ fun PackagingMovementModal(
                 ) {
                     Column(Modifier.fillMaxWidth().gap(0.4.cssRem)) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).color(info.color).toAttrs()) {
-                            Text("Aperçu de l'impact — ${selectedPkg.name}")
+                            Text("${selectedPkg.name} — ${info.shortLabel(strings)}")
                         }
                         Row(Modifier.fillMaxWidth().gap(1.5.cssRem)) {
                             Column(Modifier.gap(0.2.cssRem)) {
-                                Span(Modifier.fontSize(0.75.cssRem).color(ColorMode.current.toSitePalette().textMuted).toAttrs()) { Text("Casiers Vides") }
+                                Span(Modifier.fontSize(0.75.cssRem).color(ColorMode.current.toSitePalette().textMuted).toAttrs()) { Text(strings.pkgEmptyCrates) }
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {
                                     Span(Modifier.fontSize(0.9.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
                                         Text("${selectedPkg.emptyCrates}")
@@ -725,7 +730,7 @@ fun PackagingMovementModal(
                                 }
                             }
                             Column(Modifier.gap(0.2.cssRem)) {
-                                Span(Modifier.fontSize(0.75.cssRem).color(ColorMode.current.toSitePalette().textMuted).toAttrs()) { Text("Casiers Pleins") }
+                                Span(Modifier.fontSize(0.75.cssRem).color(ColorMode.current.toSitePalette().textMuted).toAttrs()) { Text(strings.pkgFullCrates) }
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {
                                     Span(Modifier.fontSize(0.9.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
                                         Text("${selectedPkg.fullCrates}")
@@ -747,7 +752,7 @@ fun PackagingMovementModal(
                             }
                         }
                         Span(Modifier.fontSize(0.75.cssRem).color(ColorMode.current.toSitePalette().textMuted).toAttrs()) {
-                            Text(info.description)
+                            Text(info.description(strings))
                         }
                     }
                 }
@@ -755,9 +760,9 @@ fun PackagingMovementModal(
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = "Enregistrer le Mouvement",
+                    text = strings.btnConfirmMov,
                     onClick = {
                         if (selectedPkgId.isNotBlank() && qty > 0) {
                             StockRepository.recordPackagingMovement(
@@ -788,6 +793,7 @@ fun PackagingFormModal(
     onClose: () -> Unit,
     onSave: (name: String, crateType: String, emptyCrates: Int, fullCrates: Int, depositValue: Double) -> Unit
 ) {
+    val strings = LocalLanguage.current.strings()
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var crateType by remember { mutableStateOf(initial?.crateType ?: "65cl") }
     var emptyCrates by remember { mutableStateOf(initial?.emptyCrates?.toString() ?: "0") }
@@ -797,7 +803,7 @@ fun PackagingFormModal(
     ModalDialog(title = title, isOpen = isOpen, onClose = onClose) {
         Column(Modifier.fillMaxWidth().gap(1.cssRem)) {
 
-            FormField(label = "Nom / Libellé de l'Emballage") {
+            FormField(label = strings.fieldPkgBrand) {
                 AppTextInput(
                     value = name,
                     onValueChange = { name = it },
@@ -807,7 +813,7 @@ fun PackagingFormModal(
                 )
             }
 
-            FormField(label = "Type / Format de Bouteille") {
+            FormField(label = strings.fieldPkgType) {
                 AppTextInput(
                     value = crateType,
                     onValueChange = { crateType = it },
@@ -819,7 +825,7 @@ fun PackagingFormModal(
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem)) {
                 Box(Modifier.weight(1f)) {
-                    FormField(label = "Casiers Vides Disponibles") {
+                    FormField(label = strings.fieldPkgInitialEmpty) {
                         AppTextInput(
                             value = emptyCrates,
                             onValueChange = { emptyCrates = it },
@@ -829,7 +835,7 @@ fun PackagingFormModal(
                     }
                 }
                 Box(Modifier.weight(1f)) {
-                    FormField(label = "Casiers Pleins Disponibles") {
+                    FormField(label = strings.fieldPkgInitialFull) {
                         AppTextInput(
                             value = fullCrates,
                             onValueChange = { fullCrates = it },
@@ -840,7 +846,7 @@ fun PackagingFormModal(
                 }
             }
 
-            FormField(label = "Valeur de Consignation Unitaire par Casier (FCFA)") {
+            FormField(label = strings.fieldPkgDepositUnit) {
                 AppTextInput(
                     value = depositValue,
                     onValueChange = { depositValue = it },
@@ -851,9 +857,9 @@ fun PackagingFormModal(
 
             Row(Modifier.fillMaxWidth().gap(0.75.cssRem), verticalAlignment = Alignment.CenterVertically) {
                 Spacer()
-                AppSecondaryButton(text = "Annuler", onClick = onClose)
+                AppSecondaryButton(text = strings.cancel, onClick = onClose)
                 AppButton(
-                    text = if (initial == null) "Ajouter l'Emballage" else "Sauvegarder",
+                    text = strings.btnSavePkg,
                     onClick = {
                         val emptyVal = emptyCrates.toIntOrNull() ?: 0
                         val fullVal = fullCrates.toIntOrNull() ?: 0

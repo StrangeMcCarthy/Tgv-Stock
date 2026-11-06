@@ -23,19 +23,19 @@ import com.varabyte.kobweb.silk.components.icons.fa.*
 import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.style.toAttrs
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
-import org.jetbrains.compose.web.attributes.InputType
-import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.*
 import org.jetbrains.compose.web.dom.*
-import com.varabyte.kobweb.compose.ui.styleModifier
 import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.localizeExpenseCategory
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
@@ -48,6 +48,7 @@ fun initExpensesPage(ctx: InitRouteContext) {
 @Composable
 fun ExpensesPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
     var showNewExpenseModal by remember { mutableStateOf(false) }
 
     var searchQuery by remember { mutableStateOf("") }
@@ -71,16 +72,16 @@ fun ExpensesPage() {
         Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                    Text("Registre des Dépenses & Charges")
+                    Text(strings.expensesPageTitle)
                 }
                 Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Suivi de tous les frais opérationnels du dépôt (manutention, transport, glace, factures, salaires).")
+                    Text(strings.expensesPageSubtitle)
                 }
             }
 
             Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
-                    text = "Ajouter une Dépense",
+                    text = strings.btnNewExpense,
                     onClick = { showNewExpenseModal = true },
                     icon = { FaPlus() },
                     backgroundColor = Color.rgb(0x9333EA),
@@ -99,25 +100,25 @@ fun ExpensesPage() {
                 .toAttrs()
         ) {
             StatCard(
-                title = "Total des Dépenses",
+                title = strings.statTotalExpensesAmount,
                 value = formatFcfa(totalExpensesAmount),
-                subtitle = "${filteredExpenses.size} lignes de dépenses",
+                subtitle = "${filteredExpenses.size} ${strings.statTotalExpensesAmountSub}",
                 icon = { FaReceipt() },
                 accentColor = Color.rgb(0x9333EA)
             )
 
             StatCard(
-                title = "Dépenses Aujourd'hui",
+                title = strings.statTodayExpensesAmount,
                 value = formatFcfa(todayExpensesAmount),
-                subtitle = "Charges du jour ${StockRepository.todayString()}",
+                subtitle = strings.statTodayExpensesAmountSub,
                 icon = { FaCalendarDay() },
                 accentColor = palette.danger
             )
 
             StatCard(
-                title = "Manutention & Logistique",
+                title = strings.catHandling,
                 value = formatFcfa(expenses.filter { it.category == "Manutention" }.sumOf { it.amount }),
-                subtitle = "Frais de déchargement et portage",
+                subtitle = strings.statExpenseCategoriesSub,
                 icon = { FaTruck() },
                 accentColor = palette.brand.primary
             )
@@ -136,10 +137,17 @@ fun ExpensesPage() {
                             property("white-space", "nowrap")
                         }
                 ) {
-                    listOf("Tous", "Manutention", "Transport", "Factures", "Personnel", "Divers").forEach { cat ->
-                        val isSelected = filterCategory == cat
+                    listOf(
+                        "Tous" to strings.catAllExpenses,
+                        "Manutention" to strings.catHandling,
+                        "Transport" to strings.catTransport,
+                        "Factures" to strings.catBills,
+                        "Personnel" to strings.catStaff,
+                        "Divers" to strings.catMisc
+                    ).forEach { (catKey, catLabel) ->
+                        val isSelected = filterCategory == catKey
                         Button(
-                            onClick = { filterCategory = cat },
+                            onClick = { filterCategory = catKey },
                             Modifier
                                 .fontSize(0.85.cssRem)
                                 .padding(leftRight = 0.75.cssRem, topBottom = 0.35.cssRem)
@@ -148,7 +156,7 @@ fun ExpensesPage() {
                                 .color(if (isSelected) Colors.White else if (ColorMode.current.isDark) Colors.White else Colors.Black)
                                 .border(1.px, LineStyle.Solid, if (isSelected) Color.rgb(0x9333EA) else palette.cardBorder)
                         ) {
-                            Text(cat)
+                            Text(catLabel)
                         }
                     }
                 }
@@ -156,7 +164,7 @@ fun ExpensesPage() {
                 AppTextInput(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholderText = "Chercher motif ou bénéficiaire...",
+                    placeholderText = strings.placeholderSearchExpenses,
                     type = "search",
                     modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
@@ -181,19 +189,19 @@ fun ExpensesPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("DATE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("MOTIF DE LA DÉPENSE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("CATÉGORIE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("BÉNÉFICIAIRE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("MONTANT (FCFA)") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTION") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSaleDate) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colExpenseMotive) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colExpenseCategory) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colExpenseBeneficiary) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colExpenseAmount) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.actions) }
                             }
                         }
                         Tbody {
                             if (filteredExpenses.isEmpty()) {
                                 Tr {
                                     Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "6") }) {
-                                        Text("Aucune dépense enregistrée pour ce filtre.")
+                                        Text(strings.noExpensesRecorded)
                                     }
                                 }
                             } else {
@@ -211,7 +219,7 @@ fun ExpensesPage() {
                                                     .fontSize(0.8.cssRem)
                                                     .display(DisplayStyle.InlineBlock)
                                             ) {
-                                                Text(ex.category)
+                                                Text(strings.localizeExpenseCategory(ex.category))
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).color(palette.textMuted).toAttrs()) {

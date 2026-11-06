@@ -341,7 +341,7 @@ fun InventoryPage() {
                                         Text("+${r.entrees.fmt()}")
                                         if (r.entreesBonusBottles > 0) {
                                             Span(Modifier.fontSize(0.7.cssRem).color(palette.success).fontWeight(FontWeight.Bold).display(DisplayStyle.Block).toAttrs()) {
-                                                Text("(+${r.entreesBonusBottles} btl bonus)")
+                                                Text("(+${r.entreesBonusBottles} ${strings.bottlesAbbr})")
                                             }
                                         }
                                     }

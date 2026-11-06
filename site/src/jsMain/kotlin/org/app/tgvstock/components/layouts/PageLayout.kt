@@ -21,6 +21,8 @@ import org.jetbrains.compose.web.css.fr
 import org.jetbrains.compose.web.css.percent
 import org.jetbrains.compose.web.css.vh
 import org.jetbrains.compose.web.dom.Div
+import org.app.tgvstock.LocalLanguage
+import org.app.tgvstock.strings
 import org.app.tgvstock.components.sections.Footer
 import org.app.tgvstock.components.sections.NavHeader
 import org.app.tgvstock.data.StockRepository
@@ -44,13 +46,28 @@ class PageLayoutData(val title: String)
 @Layout
 fun PageLayout(ctx: PageContext, content: @Composable ColumnScope.() -> Unit) {
     val data = ctx.data.getValue<PageLayoutData>()
+    val strings = LocalLanguage.current.strings()
 
     LaunchedEffect(Unit) {
         StockRepository.init()
     }
 
-    LaunchedEffect(data.title) {
-        document.title = "TGV Stock - ${data.title}"
+    val pageTitle = when (ctx.route.path.trimEnd('/')) {
+        "" -> strings.navDashboard
+        "/sales" -> strings.navSales
+        "/entries" -> strings.navEntries
+        "/packaging" -> strings.navPackaging
+        "/spoiled" -> strings.navSpoiled
+        "/debts" -> strings.navDebts
+        "/expenses" -> strings.navExpenses
+        "/inventory" -> strings.navInventory
+        "/reports" -> strings.navReports
+        "/products" -> strings.navProducts
+        else -> data.title
+    }
+
+    LaunchedEffect(pageTitle) {
+        document.title = "TGV Stock - $pageTitle"
     }
 
     Box(

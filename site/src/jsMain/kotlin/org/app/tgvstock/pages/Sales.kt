@@ -30,10 +30,12 @@ import org.app.tgvstock.FilterControlsGroupStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
 import org.app.tgvstock.components.widgets.*
 import org.app.tgvstock.data.StockRepository
+import org.app.tgvstock.strings
 import org.app.tgvstock.toSitePalette
 
 @InitRoute
@@ -46,6 +48,7 @@ fun initSalesPage(ctx: InitRouteContext) {
 @Composable
 fun SalesPage() {
     val palette = ColorMode.current.toSitePalette()
+    val strings = LocalLanguage.current.strings()
     var showNewSaleModal by remember { mutableStateOf(false) }
     var saleModalDestination by remember { mutableStateOf("Dépôt") }
 
@@ -74,16 +77,16 @@ fun SalesPage() {
         Div(PageHeaderStyle.toAttrs()) {
             Column(Modifier.gap(0.3.cssRem)) {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
-                    Text("Registre des Ventes")
+                    Text(strings.salesPageTitle)
                 }
                 Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
-                    Text("Enregistrement de toutes les sorties du dépôt (Dépôt direct, Bar, Grossistes, Crédits).")
+                    Text(strings.salesPageSubtitle)
                 }
             }
 
             Div(HeaderActionsStyle.toAttrs()) {
                 AppButton(
-                    text = "Transfert Bar",
+                    text = strings.btnBarTransfer,
                     onClick = {
                         saleModalDestination = "Bar"
                         showNewSaleModal = true
@@ -93,7 +96,7 @@ fun SalesPage() {
                     textColor = Colors.White
                 )
                 AppButton(
-                    text = "Enregistrer une Vente",
+                    text = strings.btnRecordSale,
                     onClick = {
                         saleModalDestination = "Dépôt"
                         showNewSaleModal = true
@@ -114,34 +117,36 @@ fun SalesPage() {
                 .gap(0.85.cssRem)
                 .toAttrs()
         ) {
+            val totalCratesStr = if (totalCrates == totalCrates.toLong().toDouble()) totalCrates.toLong().toString() else totalCrates.toString()
             StatCard(
-                title = "Total Recettes Ventes",
+                title = strings.statTotalSalesRevenue,
                 value = formatFcfa(totalAmount),
-                subtitle = "${if (totalCrates == totalCrates.toLong().toDouble()) totalCrates.toLong().toString() else totalCrates.toString()} casiers (hors transferts bar)",
+                subtitle = "$totalCratesStr ${strings.statTotalSalesRevenueSub}",
                 icon = { FaCashRegister() },
                 accentColor = palette.success
             )
 
             StatCard(
-                title = "Ventes Comptant / Dépôt",
+                title = strings.statCashSales,
                 value = formatFcfa(totalAmount - creditSalesAmount),
-                subtitle = "Encaissé en espèces / mobile",
+                subtitle = strings.statCashSalesSub,
                 icon = { FaCoins() },
                 accentColor = palette.brand.primary
             )
 
             StatCard(
-                title = "Ventes À Crédit",
+                title = strings.statCreditSales,
                 value = formatFcfa(creditSalesAmount),
-                subtitle = "Enregistrées dans les Dettes",
+                subtitle = strings.statCreditSalesSub,
                 icon = { FaHandHoldingDollar() },
                 accentColor = palette.danger
             )
 
+            val barCratesStr = if (barTransferCrates == barTransferCrates.toLong().toDouble()) barTransferCrates.toLong().toString() else barTransferCrates.toString()
             StatCard(
-                title = "Transferts Bar",
+                title = strings.statBarTransfers,
                 value = formatFcfa(barTransferAmount),
-                subtitle = "${if (barTransferCrates == barTransferCrates.toLong().toDouble()) barTransferCrates.toLong().toString() else barTransferCrates.toString()} casiers transférés (déduits du stock, hors total vendu)",
+                subtitle = "$barCratesStr ${strings.statBarTransfersSub}",
                 icon = { FaWineGlass() },
                 accentColor = Color.rgb(0x8B5CF6)
             )
@@ -154,7 +159,7 @@ fun SalesPage() {
                     // Filter date
                     Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                            Text("Date :")
+                            Text(strings.filterByDate)
                         }
                         AppTextInput(
                             value = filterDate,
@@ -166,7 +171,7 @@ fun SalesPage() {
                                 onClick = { filterDate = "" },
                                 Modifier.fontSize(0.75.cssRem).padding(leftRight = 0.5.cssRem, topBottom = 0.3.cssRem)
                             ) {
-                                Text("Toutes les dates")
+                                Text(strings.allDates)
                             }
                         }
                     }
@@ -174,17 +179,17 @@ fun SalesPage() {
                     // Destination filter
                     Row(Modifier.gap(0.4.cssRem), verticalAlignment = Alignment.CenterVertically) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
-                            Text("Destination :")
+                            Text(strings.filterDestination)
                         }
                         Select(
                             Modifier.padding(0.4.cssRem).borderRadius(6.px).toAttrs {
                                 onChange { filterDestination = it.value ?: "Tous" }
                             }
                         ) {
-                            Option("Tous") { Text("Toutes destinations") }
-                            Option("Dépôt") { Text("Dépôt") }
-                            Option("Bar") { Text("Bar") }
-                            Option("Client Gros") { Text("Client Gros") }
+                            Option("Tous") { Text(strings.destAll) }
+                            Option("Dépôt") { Text(strings.destDirectOption) }
+                            Option("Bar") { Text(strings.destBarOption) }
+                            Option("Client Gros") { Text(strings.destWholesaleOption) }
                         }
                     }
                 }
@@ -193,7 +198,7 @@ fun SalesPage() {
                 AppTextInput(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholderText = "Chercher produit ou client...",
+                    placeholderText = strings.placeholderSearchSales,
                     type = "search",
                     modifier = Modifier.fillMaxWidth().maxWidth(18.cssRem)
                 )
@@ -218,22 +223,22 @@ fun SalesPage() {
                                     .borderBottom(2.px, LineStyle.Solid, palette.cardBorder)
                                     .toAttrs()
                             ) {
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("DATE") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("PRODUIT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text("CLIENT / ACHETEUR") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("DESTINATION") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("QUANTITÉ (CASIERS)") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("P.U (FCFA)") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text("MONTANT TOTAL") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("PAIEMENT") }
-                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text("ACTION") }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSaleDate) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSaleProduct) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Start).toAttrs()) { Text(strings.colSaleCustomer) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colSaleDestination) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colSaleQty) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colSaleUnitPrice) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) { Text(strings.colSaleTotal) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colSalePayment) }
+                                Th(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) { Text(strings.colSaleAction) }
                             }
                         }
                         Tbody {
                             if (filteredSales.isEmpty()) {
                                 Tr {
                                     Td(Modifier.padding(2.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs { attr("colspan", "9") }) {
-                                        Text("Aucune vente enregistrée pour ces critères.")
+                                        Text(strings.noSalesFound)
                                     }
                                 }
                             } else {
@@ -248,6 +253,12 @@ fun SalesPage() {
                                         Td(Modifier.padding(0.75.cssRem).fontWeight(FontWeight.Bold).toAttrs()) { Text(sale.productName) }
                                         Td(Modifier.padding(0.75.cssRem).toAttrs()) { Text(sale.customerName) }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
+                                            val destLabel = when (sale.destination) {
+                                                "Bar" -> strings.destBarOption
+                                                "Dépôt" -> strings.destDirectOption
+                                                "Client Gros" -> strings.destWholesaleOption
+                                                else -> sale.destination
+                                            }
                                             Box(
                                                 Modifier
                                                     .backgroundColor(if (sale.destination == "Bar") Color.rgb(0xEDE9FE) else palette.nearBackground)
@@ -257,14 +268,14 @@ fun SalesPage() {
                                                     .fontSize(0.8.cssRem)
                                                     .display(DisplayStyle.InlineBlock)
                                             ) {
-                                                Text(sale.destination)
+                                                Text(destLabel)
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) {
                                             val qtyStr = if (sale.quantityCrates == sale.quantityCrates.toLong().toDouble())
                                                 sale.quantityCrates.toLong().toString()
                                             else sale.quantityCrates.toString()
-                                            Text("$qtyStr casiers")
+                                            Text("$qtyStr ${strings.crates}")
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.End).toAttrs()) {
                                             Text(formatFcfa(sale.unitPrice))
@@ -276,7 +287,7 @@ fun SalesPage() {
                                                         Text(formatFcfa(sale.totalAmount))
                                                     }
                                                     Span(Modifier.fontSize(0.7.cssRem).color(palette.textMuted).toAttrs()) {
-                                                        Text("(Transfert Bar)")
+                                                        Text("(${strings.badgeBarTransfer})")
                                                     }
                                                 }
                                             } else {
@@ -287,6 +298,13 @@ fun SalesPage() {
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
                                             val isCredit = sale.isDebt || sale.paymentMethod == "À Crédit"
+                                            val paymentText = when (sale.paymentMethod) {
+                                                "À Crédit" -> strings.paymentCredit
+                                                "Espèces" -> strings.paymentCash
+                                                "Mobile Money" -> strings.paymentMobile
+                                                "Transfert Interne" -> strings.paymentInternal
+                                                else -> sale.paymentMethod
+                                            }
                                             Box(
                                                 Modifier
                                                     .backgroundColor(if (isCredit) Color.rgb(0xFEE2E2) else Color.rgb(0xDCFCE7))
@@ -297,7 +315,7 @@ fun SalesPage() {
                                                     .fontWeight(FontWeight.Bold)
                                                     .display(DisplayStyle.InlineBlock)
                                             ) {
-                                                Text(sale.paymentMethod)
+                                                Text(paymentText)
                                             }
                                         }
                                         Td(Modifier.padding(0.75.cssRem).textAlign(com.varabyte.kobweb.compose.css.TextAlign.Center).toAttrs()) {
