@@ -29,6 +29,7 @@ import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.SubheadlineTextStyle
 import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
@@ -73,7 +74,7 @@ fun DebtsPage() {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.debtsPageTitle)
                 }
-                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(SubheadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.debtsPageSubtitle)
                 }
             }

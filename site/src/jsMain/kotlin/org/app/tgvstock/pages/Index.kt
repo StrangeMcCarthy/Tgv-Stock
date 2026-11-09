@@ -34,6 +34,7 @@ import org.app.tgvstock.FilterBarStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.SubheadlineTextStyle
 import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
@@ -100,7 +101,7 @@ fun HomePage() {
                         Text(strings.operational)
                     }
                 }
-                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(SubheadlineTextStyle.toModifier().toAttrs()) {
                     Text("Date: ${StockRepository.todayString()} — ${strings.dashSubtitle}")
                 }
             }
@@ -477,10 +478,30 @@ fun QuickActionTile(
                 Spacer()
                 FaArrowRight(Modifier.fontSize(0.75.cssRem).color(palette.textMuted))
             }
-            Span(Modifier.fontWeight(FontWeight.Bold).fontSize(0.95.cssRem).toAttrs()) {
+            Span(
+                Modifier
+                    .fontWeight(FontWeight.Bold)
+                    .lineHeight(1.2)
+                    .styleModifier {
+                        property("font-size", "clamp(0.82rem, 1.8vw, 0.95rem)")
+                        property("word-break", "break-word")
+                        property("overflow-wrap", "break-word")
+                    }
+                    .toAttrs()
+            ) {
                 Text(title)
             }
-            Span(Modifier.fontSize(0.75.cssRem).color(palette.textMuted).toAttrs()) {
+            Span(
+                Modifier
+                    .color(palette.textMuted)
+                    .lineHeight(1.25)
+                    .styleModifier {
+                        property("font-size", "clamp(0.68rem, 1.4vw, 0.78rem)")
+                        property("word-break", "break-word")
+                        property("overflow-wrap", "break-word")
+                    }
+                    .toAttrs()
+            ) {
                 Text(desc)
             }
         }

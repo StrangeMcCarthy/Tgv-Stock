@@ -6,6 +6,7 @@ import com.varabyte.kobweb.compose.css.Overflow
 import com.varabyte.kobweb.compose.css.OverflowWrap
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.*
+import com.varabyte.kobweb.compose.ui.styleModifier
 import com.varabyte.kobweb.core.data.add
 import com.varabyte.kobweb.core.init.InitRoute
 import com.varabyte.kobweb.core.init.InitRouteContext
@@ -27,31 +28,45 @@ val MarkdownStyle = CssStyle {
 
     cssRule("h1") {
         Modifier
-            .fontSize(3.cssRem)
             .fontWeight(400)
-            .margin(bottom = 2.5.cssRem)
-            .lineHeight(1.2) //1.5x doesn't look as good on very large text
+            .margin(bottom = 1.5.cssRem)
+            .lineHeight(1.2)
+            .styleModifier {
+                property("font-size", "clamp(1.75rem, 5vw, 3rem)")
+                property("overflow-wrap", "break-word")
+            }
     }
 
     cssRule("h2") {
         Modifier
-            .fontSize(3.cssRem)
             .fontWeight(300)
-            .margin(topBottom = 2.cssRem)
+            .margin(topBottom = 1.25.cssRem)
+            .lineHeight(1.25)
+            .styleModifier {
+                property("font-size", "clamp(1.4rem, 4vw, 2.4rem)")
+                property("overflow-wrap", "break-word")
+            }
     }
 
     cssRule("h3") {
         Modifier
-            .fontSize(2.4.cssRem)
             .fontWeight(300)
-            .margin(topBottom = 1.5.cssRem)
+            .margin(topBottom = 1.cssRem)
+            .lineHeight(1.3)
+            .styleModifier {
+                property("font-size", "clamp(1.15rem, 3vw, 1.8rem)")
+                property("overflow-wrap", "break-word")
+            }
     }
 
     cssRule("h4") {
         Modifier
-            .fontSize(1.2.cssRem)
             .fontWeight(FontWeight.Bolder)
             .margin(top = 1.cssRem, bottom = 0.5.cssRem)
+            .styleModifier {
+                property("font-size", "clamp(0.95rem, 2vw, 1.2rem)")
+                property("overflow-wrap", "break-word")
+            }
     }
 
     cssRule("ul") {

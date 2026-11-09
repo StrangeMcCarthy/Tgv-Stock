@@ -26,6 +26,13 @@ import org.jetbrains.compose.web.css.*
 @InitSilk
 fun initSiteStyles(ctx: InitSilkContext) {
     ctx.stylesheet.registerStyle("html") {
+        Modifier.styleModifier {
+            property("font-size", "clamp(13px, 0.8rem + 0.35vw, 16px)")
+            property("-webkit-text-size-adjust", "100%")
+            property("text-size-adjust", "100%")
+            property("text-rendering", "optimizeLegibility")
+            property("-webkit-font-smoothing", "antialiased")
+        }
         cssRule(CSSMediaQuery.MediaFeature("prefers-reduced-motion", StylePropertyValue("no-preference"))) {
             Modifier.scrollBehavior(ScrollBehavior.Smooth)
         }
@@ -37,8 +44,41 @@ fun initSiteStyles(ctx: InitSilkContext) {
                 "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
                 "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "sans-serif"
             )
-            .fontSize(15.px)
             .lineHeight(1.5)
+            .styleModifier {
+                property("overflow-wrap", "break-word")
+            }
+    }
+
+    ctx.stylesheet.registerStyle("h1, .h1") {
+        Modifier.styleModifier {
+            property("font-size", "clamp(1.35rem, 3.2vw, 2.1rem)")
+            property("line-height", "1.25")
+            property("overflow-wrap", "break-word")
+        }
+    }
+
+    ctx.stylesheet.registerStyle("h2, .h2") {
+        Modifier.styleModifier {
+            property("font-size", "clamp(1.15rem, 2.5vw, 1.6rem)")
+            property("line-height", "1.3")
+            property("overflow-wrap", "break-word")
+        }
+    }
+
+    ctx.stylesheet.registerStyle("h3, .h3") {
+        Modifier.styleModifier {
+            property("font-size", "clamp(1rem, 2vw, 1.25rem)")
+            property("line-height", "1.35")
+            property("overflow-wrap", "break-word")
+        }
+    }
+
+    ctx.stylesheet.registerStyle("p") {
+        Modifier.styleModifier {
+            property("overflow-wrap", "break-word")
+            property("line-height", "1.5")
+        }
     }
 
     ctx.theme.modifyStyleBase(HorizontalDividerStyle) {
@@ -49,6 +89,23 @@ fun initSiteStyles(ctx: InitSilkContext) {
     ctx.stylesheet.registerStyle("th") {
         Modifier.styleModifier {
             property("white-space", "nowrap")
+            property("font-size", "clamp(0.75rem, 1.2vw, 0.85rem)")
+            property("letter-spacing", "0.2px")
+        }
+    }
+
+    ctx.stylesheet.registerStyle("td") {
+        Modifier.styleModifier {
+            property("font-size", "clamp(0.78rem, 1.3vw, 0.88rem)")
+            property("line-height", "1.4")
+        }
+    }
+
+    // Responsive form inputs and buttons
+    ctx.stylesheet.registerStyle("input, select, textarea") {
+        Modifier.styleModifier {
+            property("font-family", "inherit")
+            property("font-size", "clamp(0.82rem, 1.4vw, 0.92rem)")
         }
     }
 
@@ -73,14 +130,17 @@ fun initSiteStyles(ctx: InitSilkContext) {
 val HeadlineTextStyle = CssStyle {
     base {
         Modifier
-            .fontSize(1.45.cssRem)
             .fontWeight(700)
             .textAlign(TextAlign.Start)
-            .lineHeight(1.25)
+            .lineHeight(1.22)
+            .styleModifier {
+                property("font-size", "clamp(1.25rem, 3.8vw, 2.1rem)")
+                property("overflow-wrap", "break-word")
+                property("word-break", "break-word")
+            }
     }
     Breakpoint.MD {
         Modifier
-            .fontSize(2.1.cssRem)
             .lineHeight(1.2)
     }
 }
@@ -88,15 +148,46 @@ val HeadlineTextStyle = CssStyle {
 val SubheadlineTextStyle = CssStyle {
     base {
         Modifier
-            .fontSize(0.85.cssRem)
             .textAlign(TextAlign.Start)
             .color(colorMode.toPalette().color.toRgb().copyf(alpha = 0.75f))
-            .lineHeight(1.35)
+            .lineHeight(1.4)
+            .styleModifier {
+                property("font-size", "clamp(0.78rem, 1.6vw, 0.95rem)")
+                property("overflow-wrap", "break-word")
+                property("word-break", "break-word")
+            }
     }
     Breakpoint.MD {
         Modifier
-            .fontSize(0.98.cssRem)
             .lineHeight(1.4)
+    }
+}
+
+val SectionTitleStyle = CssStyle {
+    base {
+        Modifier
+            .fontWeight(700)
+            .textAlign(TextAlign.Start)
+            .lineHeight(1.25)
+            .styleModifier {
+                property("font-size", "clamp(1.02rem, 2.4vw, 1.25rem)")
+                property("overflow-wrap", "break-word")
+                property("word-break", "break-word")
+            }
+    }
+}
+
+val SectionSubtitleStyle = CssStyle {
+    base {
+        val palette = colorMode.toSitePalette()
+        Modifier
+            .color(palette.textMuted)
+            .lineHeight(1.35)
+            .styleModifier {
+                property("font-size", "clamp(0.75rem, 1.4vw, 0.85rem)")
+                property("overflow-wrap", "break-word")
+                property("word-break", "break-word")
+            }
     }
 }
 

@@ -30,6 +30,7 @@ import org.app.tgvstock.FilterControlsGroupStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.SubheadlineTextStyle
 import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
@@ -79,7 +80,7 @@ fun SalesPage() {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.salesPageTitle)
                 }
-                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(SubheadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.salesPageSubtitle)
                 }
             }

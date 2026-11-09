@@ -67,14 +67,28 @@ fun StatCard(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.gap(0.25.cssRem).weight(1)) {
-                Span(Modifier.fontSize(0.8.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
+            Column(Modifier.gap(0.25.cssRem).weight(1).minWidth(0.px)) {
+                Span(Modifier.fontWeight(FontWeight.Medium).color(palette.textMuted).styleModifier {
+                    property("font-size", "clamp(0.72rem, 1.4vw, 0.82rem)")
+                    property("white-space", "nowrap")
+                    property("overflow", "hidden")
+                    property("text-overflow", "ellipsis")
+                }.toAttrs()) {
                     Text(title)
                 }
-                Span(Modifier.fontSize(1.25.cssRem).fontWeight(FontWeight.Bold).lineHeight(1.2).toAttrs()) {
+                Span(Modifier.fontWeight(FontWeight.Bold).lineHeight(1.2).styleModifier {
+                    property("font-size", "clamp(1.05rem, 2.4vw, 1.3rem)")
+                    property("word-break", "break-word")
+                    property("overflow-wrap", "break-word")
+                }.toAttrs()) {
                     Text(value)
                 }
-                Span(Modifier.fontSize(0.72.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(Modifier.color(palette.textMuted).styleModifier {
+                    property("font-size", "clamp(0.68rem, 1.2vw, 0.75rem)")
+                    property("white-space", "nowrap")
+                    property("overflow", "hidden")
+                    property("text-overflow", "ellipsis")
+                }.toAttrs()) {
                     Text(subtitle)
                 }
             }
@@ -114,9 +128,13 @@ fun AppButton(
             .setVariable(ButtonVars.BackgroundDefaultColor, bg)
             .setVariable(ButtonVars.Color, fg)
             .borderRadius(8.px)
-            .padding(leftRight = 1.cssRem, topBottom = 0.5.cssRem)
+            .padding(leftRight = 0.85.cssRem, topBottom = 0.45.cssRem)
             .fontWeight(FontWeight.SemiBold)
-            .fontSize(0.9.cssRem)
+            .lineHeight(1.2)
+            .styleModifier {
+                property("font-size", "clamp(0.8rem, 1.4vw, 0.9rem)")
+                property("white-space", "nowrap")
+            }
             .boxShadow(0.px, 2.px, 6.px, 0.px, rgba(0, 0, 0, 0.1))
             .then(modifier)
     ) {
@@ -252,7 +270,18 @@ fun ModalDialog(
                     Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Span(Modifier.fontSize(1.25.cssRem).fontWeight(FontWeight.Bold).color(palette.brand.primary).toAttrs()) {
+                    Span(
+                        Modifier
+                            .fontWeight(FontWeight.Bold)
+                            .color(palette.brand.primary)
+                            .lineHeight(1.25)
+                            .styleModifier {
+                                property("font-size", "clamp(1.05rem, 2.5vw, 1.3rem)")
+                                property("word-break", "break-word")
+                                property("overflow-wrap", "break-word")
+                            }
+                            .toAttrs()
+                    ) {
                         Text(title)
                     }
                     Spacer()
@@ -301,7 +330,16 @@ fun FormField(
 ) {
     val palette = ColorMode.current.toSitePalette()
     Column(Modifier.fillMaxWidth().gap(0.3.cssRem)) {
-        Label(attrs = Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Medium).color(palette.textMuted).toAttrs()) {
+        Label(
+            attrs = Modifier
+                .fontWeight(FontWeight.Medium)
+                .color(palette.textMuted)
+                .styleModifier {
+                    property("font-size", "clamp(0.78rem, 1.4vw, 0.88rem)")
+                    property("word-break", "break-word")
+                }
+                .toAttrs()
+        ) {
             Text(label)
         }
         content()

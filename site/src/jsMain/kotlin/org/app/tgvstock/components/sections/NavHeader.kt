@@ -13,6 +13,7 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.*
+import com.varabyte.kobweb.compose.ui.styleModifier
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.rememberPageContext
 import com.varabyte.kobweb.silk.components.graphics.Image
@@ -195,14 +196,41 @@ fun NavHeader() {
                 }
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.gap(0.3.cssRem)) {
-                        Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.2.cssRem).color(if (ColorMode.current.isDark) Colors.White else Color.rgb(0x0f172a)).letterSpacing(0.5.px).toAttrs()) {
+                        Span(
+                            Modifier
+                                .fontWeight(FontWeight.ExtraBold)
+                                .color(if (ColorMode.current.isDark) Colors.White else Color.rgb(0x0f172a))
+                                .letterSpacing(0.5.px)
+                                .styleModifier {
+                                    property("font-size", "clamp(1.05rem, 2.5vw, 1.25rem)")
+                                }
+                                .toAttrs()
+                        ) {
                             Text("TGV")
                         }
-                        Span(Modifier.fontWeight(FontWeight.ExtraBold).fontSize(1.2.cssRem).color(palette.brand.primary).letterSpacing(0.5.px).toAttrs()) {
+                        Span(
+                            Modifier
+                                .fontWeight(FontWeight.ExtraBold)
+                                .color(palette.brand.primary)
+                                .letterSpacing(0.5.px)
+                                .styleModifier {
+                                    property("font-size", "clamp(1.05rem, 2.5vw, 1.25rem)")
+                                }
+                                .toAttrs()
+                        ) {
                             Text("STOCK")
                         }
                     }
-                    Span(Modifier.displayIfAtLeast(Breakpoint.SM).fontSize(0.7.cssRem).color(palette.textMuted).letterSpacing(0.4.px).toAttrs()) {
+                    Span(
+                        Modifier
+                            .displayIfAtLeast(Breakpoint.SM)
+                            .color(palette.textMuted)
+                            .letterSpacing(0.4.px)
+                            .styleModifier {
+                                property("font-size", "clamp(0.65rem, 1.2vw, 0.72rem)")
+                            }
+                            .toAttrs()
+                    ) {
                         Text(strings.navSubtitle)
                     }
                 }

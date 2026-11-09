@@ -34,6 +34,7 @@ import org.app.tgvstock.FilterControlsGroupStyle
 import org.app.tgvstock.GlassCardStyle
 import org.app.tgvstock.HeaderActionsStyle
 import org.app.tgvstock.HeadlineTextStyle
+import org.app.tgvstock.SubheadlineTextStyle
 import org.app.tgvstock.LocalLanguage
 import org.app.tgvstock.PageHeaderStyle
 import org.app.tgvstock.components.layouts.PageLayoutData
@@ -77,7 +78,7 @@ fun InventoryPage() {
                 Span(HeadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.inventoryPageTitle)
                 }
-                Span(Modifier.fontSize(0.85.cssRem).color(palette.textMuted).toAttrs()) {
+                Span(SubheadlineTextStyle.toModifier().toAttrs()) {
                     Text(strings.inventoryPageSubtitle)
                 }
             }
@@ -417,11 +418,29 @@ fun ReconBox(title: String, amount: Double, color: Color) {
             .borderRadius(10.px)
             .padding(1.cssRem)
     ) {
-        Column(Modifier.gap(0.3.cssRem)) {
-            Span(Modifier.fontSize(0.8.cssRem).fontWeight(FontWeight.SemiBold).color(palette.textMuted).toAttrs()) {
+        Column(Modifier.gap(0.3.cssRem).fillMaxWidth()) {
+            Span(
+                Modifier
+                    .fontWeight(FontWeight.SemiBold)
+                    .color(palette.textMuted)
+                    .styleModifier {
+                        property("font-size", "clamp(0.72rem, 1.4vw, 0.82rem)")
+                        property("word-break", "break-word")
+                    }
+                    .toAttrs()
+            ) {
                 Text(title)
             }
-            Span(Modifier.fontSize(1.2.cssRem).fontWeight(FontWeight.ExtraBold).color(color).toAttrs()) {
+            Span(
+                Modifier
+                    .fontWeight(FontWeight.ExtraBold)
+                    .color(color)
+                    .styleModifier {
+                        property("font-size", "clamp(0.95rem, 2.2vw, 1.25rem)")
+                        property("word-break", "break-word")
+                    }
+                    .toAttrs()
+            ) {
                 Text(formatFcfa(amount))
             }
         }
