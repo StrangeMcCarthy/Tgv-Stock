@@ -111,7 +111,6 @@ fun initSiteStyles(ctx: InitSilkContext) {
 
     // Print optimization styling for official Depot Inventory sheets
     ctx.stylesheet.registerStyle("@media print") {
-        // In print mode, hide navigation, footers, interactive action buttons
         cssRule(".no-print") {
             Modifier.display(DisplayStyle.None)
         }
@@ -119,12 +118,113 @@ fun initSiteStyles(ctx: InitSilkContext) {
             Modifier.display(DisplayStyle.Block)
         }
         cssRule("body") {
-            Modifier.backgroundColor(Colors.White).color(Colors.Black).fontSize(11.px)
+            Modifier.backgroundColor(Colors.White).color(Colors.Black).fontSize(9.pt)
         }
         cssRule(".print-table th, .print-table td") {
-            Modifier.padding(4.px).border(1.px, LineStyle.Solid, Colors.Black)
+            Modifier.padding(2.px).border(1.px, LineStyle.Solid, Colors.Black)
         }
     }
+
+    // Direct @page and print stylesheet injection for browser PDF generation & printing
+    js("""
+        if (typeof document !== 'undefined' && !document.getElementById('tgv-pdf-print-rules')) {
+            var styleEl = document.createElement('style');
+            styleEl.id = 'tgv-pdf-print-rules';
+            styleEl.textContent = `
+                @page {
+                    size: landscape;
+                    margin: 6mm 8mm;
+                }
+                @media print {
+                    html, body {
+                        width: 100% !important;
+                        min-width: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                        font-size: 8pt !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    .no-print, header, nav, footer, .silk-navigation {
+                        display: none !important;
+                    }
+                    *, *:before, *:after {
+                        overflow: visible !important;
+                        box-shadow: none !important;
+                        text-shadow: none !important;
+                    }
+                    div[class*="PageContentStyle"], .print-sheet {
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                        max-width: 100% !important;
+                        width: 100% !important;
+                    }
+                    .print-table-container, .print-table-inner {
+                        width: 100% !important;
+                        min-width: 0 !important;
+                        max-width: 100% !important;
+                        overflow: visible !important;
+                        display: block !important;
+                    }
+                    .print-recon-grid {
+                        display: flex !important;
+                        flex-direction: row !important;
+                        gap: 12px !important;
+                        width: 100% !important;
+                    }
+                    .print-recon-col {
+                        flex: 1 1 50% !important;
+                        max-width: 50% !important;
+                    }
+                    table.print-table {
+                        width: 100% !important;
+                        min-width: 0 !important;
+                        max-width: 100% !important;
+                        table-layout: auto !important;
+                        border-collapse: collapse !important;
+                        font-size: 7pt !important;
+                        line-height: 1.15 !important;
+                    }
+                    table.print-table th, table.print-table td {
+                        padding: 2.5px 3px !important;
+                        border: 1px solid #000000 !important;
+                        white-space: nowrap !important;
+                    }
+                    table.print-table th {
+                        background-color: #f3f4f6 !important;
+                        font-weight: 700 !important;
+                        font-size: 7.2pt !important;
+                        text-align: center !important;
+                    }
+                    table.print-table th:first-child, table.print-table td:first-child {
+                        text-align: left !important;
+                    }
+                    table.print-table td.prod-name {
+                        white-space: normal !important;
+                        max-width: 130px !important;
+                        word-break: break-word !important;
+                        font-weight: 600 !important;
+                    }
+                    table.print-table thead {
+                        display: table-header-group !important;
+                    }
+                    table.print-table tr {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                    }
+                    .avoid-page-break {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                    }
+                }
+            `;
+            document.head.appendChild(styleEl);
+        }
+    """)
 }
 
 val HeadlineTextStyle = CssStyle {

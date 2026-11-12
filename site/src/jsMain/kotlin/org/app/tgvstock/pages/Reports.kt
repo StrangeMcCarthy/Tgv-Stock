@@ -182,6 +182,7 @@ fun ReportsPage() {
                 .borderRadius(8.px)
                 .boxShadow(0.px, 4.px, 20.px, 0.px, rgba(0, 0, 0, 0.15))
                 .border(1.px, LineStyle.Solid, Color.rgb(0xD1D5DB))
+                .classNames("print-sheet")
         ) {
             Column(Modifier.fillMaxWidth().gap(1.5.cssRem)) {
 
@@ -218,9 +219,9 @@ fun ReportsPage() {
                 }
 
                 // Section 1: Financial Reconciliation (Sheet 1 reproduction)
-                Div(Modifier.fillMaxWidth().display(DisplayStyle.Flex).flexWrap(FlexWrap.Wrap).gap(1.5.cssRem).toAttrs()) {
-                    Box(Modifier.fillMaxWidth().maxWidth(34.cssRem).styleModifier { property("flex", "1 1 300px") }) {
-                        ResponsiveTableContainer(minWidth = 320.px) {
+                Div(Modifier.fillMaxWidth().display(DisplayStyle.Flex).flexWrap(FlexWrap.Wrap).gap(1.5.cssRem).classNames("print-recon-grid").toAttrs()) {
+                    Box(Modifier.fillMaxWidth().maxWidth(34.cssRem).classNames("print-recon-col").styleModifier { property("flex", "1 1 300px") }) {
+                        ResponsiveTableContainer(minWidth = 320.px, modifier = Modifier.classNames("print-table-container")) {
                             Table(
                                 Modifier
                                     .fillMaxWidth()
@@ -265,7 +266,7 @@ fun ReportsPage() {
                         }
                     }
 
-                    Box(Modifier.fillMaxWidth().maxWidth(34.cssRem).styleModifier { property("flex", "1 1 280px") }) {
+                    Box(Modifier.fillMaxWidth().maxWidth(34.cssRem).classNames("print-recon-col").styleModifier { property("flex", "1 1 280px") }) {
                         Column(
                             Modifier
                                 .fillMaxSize()
@@ -307,7 +308,7 @@ fun ReportsPage() {
                         Text(strings.stockDetailTitle)
                     }
 
-                    ResponsiveTableContainer(minWidth = 850.px) {
+                    ResponsiveTableContainer(minWidth = 960.px, modifier = Modifier.classNames("print-table-container")) {
                         Table(
                             Modifier
                                 .fillMaxWidth()
@@ -322,10 +323,13 @@ fun ReportsPage() {
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colInitStock) }
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colEntries) }
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colTotalStock) }
-                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colRemainingTheoretical) }
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colTotalOutflows) }
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colBarOutflows) }
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colSalesQty) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colSpoiledBottles) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colRemainingTheoretical) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colRemainingPhysical) }
+                                    Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(strings.colDifference) }
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(strings.colUnitPrice) }
                                     Th(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(strings.colTotalSalesPrice) }
                                 }
@@ -334,7 +338,7 @@ fun ReportsPage() {
                                 fun Double.fmt() = if (this == this.toLong().toDouble()) this.toLong().toString() else this.toString()
                                 rows.forEach { r ->
                                     Tr {
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.SemiBold).toAttrs()) { Text(r.product.name) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).fontWeight(FontWeight.SemiBold).classNames("prod-name").toAttrs()) { Text(r.product.name) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(r.stockInitial.fmt()) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
                                             Text(r.entrees.fmt())
@@ -345,10 +349,31 @@ fun ReportsPage() {
                                             }
                                         }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.totalStock.fmt()) }
-                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(r.resteTheorique.fmt()) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.totalSorties.fmt()) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(r.sortiesBar.fmt()) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.ventesQty.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
+                                            if (r.avariesBottles > 0) {
+                                                Span(Modifier.color(Color.rgb(0xDC2626)).fontWeight(FontWeight.Bold).toAttrs()) {
+                                                    Text("${r.avariesBottles}")
+                                                }
+                                            } else {
+                                                Text("0")
+                                            }
+                                        }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) { Text(r.resteTheorique.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(r.restePhysique.fmt()) }
+                                        Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).fontWeight(FontWeight.Bold).toAttrs()) {
+                                            val ecartStr = if (r.ecart > 0) "+${r.ecart.fmt()}" else r.ecart.fmt()
+                                            val ecartColor = when {
+                                                r.ecart < 0 -> Color.rgb(0xDC2626)
+                                                r.ecart > 0 -> Color.rgb(0x2563EB)
+                                                else -> Colors.Black
+                                            }
+                                            Span(Modifier.color(ecartColor).toAttrs()) {
+                                                Text(ecartStr)
+                                            }
+                                        }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(r.unitPrice)) }
                                         Td(Modifier.padding(0.3.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).fontWeight(FontWeight.Bold).toAttrs()) { Text(formatFcfa(r.montantVentes)) }
                                     }
@@ -356,10 +381,13 @@ fun ReportsPage() {
 
                                 // Total Row
                                 val totalBonusInReport = rows.sumOf { it.entreesBonusBottles }
+                                val totalAvariesInReport = rows.sumOf { it.avariesBottles }
+                                val totalEcartInReport = rows.sumOf { it.ecart }
+
                                 Tr(Modifier.backgroundColor(Color.rgb(0xF3F4F6)).fontWeight(FontWeight.ExtraBold).toAttrs()) {
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("${strings.actions.uppercase()} / TOTAL") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.stockInitial }.fmt()) }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("${strings.actions.uppercase()} / TOTAL") }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.stockInitial }.fmt()) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
                                         Text(rows.sumOf { it.entrees }.fmt())
                                         if (totalBonusInReport > 0) {
                                             Span(Modifier.fontSize(0.68.cssRem).color(Color.rgb(0x16A34A)).display(DisplayStyle.Block).toAttrs()) {
@@ -367,13 +395,21 @@ fun ReportsPage() {
                                             }
                                         }
                                     }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.totalStock }.fmt()) }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.resteTheorique }.fmt()) }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.totalSorties }.fmt()) }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.sortiesBar }.fmt()) }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.ventesQty }.fmt()) }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("—") }
-                                    Td(Modifier.padding(0.4.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalVentes)) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.totalStock }.fmt()) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.totalSorties }.fmt()) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.sortiesBar }.fmt()) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.ventesQty }.fmt()) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
+                                        Text(if (totalAvariesInReport > 0) "$totalAvariesInReport" else "0")
+                                    }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.resteTheorique }.fmt()) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) { Text(rows.sumOf { it.restePhysique }.fmt()) }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.Center).toAttrs()) {
+                                        val ecartStr = if (totalEcartInReport > 0) "+${totalEcartInReport.fmt()}" else totalEcartInReport.fmt()
+                                        Text(ecartStr)
+                                    }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).toAttrs()) { Text("—") }
+                                    Td(Modifier.padding(0.35.cssRem).border(1.px, LineStyle.Solid, Colors.Black).textAlign(TextAlign.End).toAttrs()) { Text(formatFcfa(totalVentes)) }
                                 }
                             }
                         }
@@ -381,8 +417,8 @@ fun ReportsPage() {
                 }
 
                 // Signatures Footer
-                Row(Modifier.fillMaxWidth().padding(top = 2.cssRem)) {
-                    Column(Modifier.gap(2.cssRem)) {
+                Row(Modifier.fillMaxWidth().padding(top = 1.cssRem).classNames("avoid-page-break")) {
+                    Column(Modifier.gap(1.5.cssRem)) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
                             Text("${strings.docSellerSignature} :")
                         }
@@ -391,7 +427,7 @@ fun ReportsPage() {
                         }
                     }
                     Spacer()
-                    Column(Modifier.gap(2.cssRem).textAlign(TextAlign.End)) {
+                    Column(Modifier.gap(1.5.cssRem).textAlign(TextAlign.End)) {
                         Span(Modifier.fontSize(0.85.cssRem).fontWeight(FontWeight.Bold).toAttrs()) {
                             Text("${strings.docManagerSignature} :")
                         }

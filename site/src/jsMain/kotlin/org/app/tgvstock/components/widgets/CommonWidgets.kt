@@ -317,7 +317,7 @@ fun ResponsiveTableContainer(
             .then(modifier)
             .toAttrs()
     ) {
-        Box(Modifier.fillMaxWidth().minWidth(minWidth)) {
+        Box(Modifier.fillMaxWidth().minWidth(minWidth).classNames("print-table-inner")) {
             content()
         }
     }
